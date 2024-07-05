@@ -1,0 +1,24 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "0.1",
+	"FriendlyName": "GridNavigator",
+	"Description": "A plugin for grid-aligned navigation in Unreal Engine.",
+	"Category": "Navigation",
+	"CreatedBy": "skarjala",
+	"CreatedByURL": "https://skarja.la",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "GridNavigator",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}
