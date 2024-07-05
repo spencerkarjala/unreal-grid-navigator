@@ -1,4 +1,4 @@
-#include "GridNavigatorCursor.h"
+#include "GridNavigatorCursorComponent.h"
 
 #include "Components/SplineMeshComponent.h"
 

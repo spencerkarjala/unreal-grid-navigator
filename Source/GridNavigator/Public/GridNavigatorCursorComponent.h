@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GridNavigatorCursor.generated.h"
+#include "GridNavigatorCursorComponent.generated.h"
 
 class USplineMeshComponent;
 
@@ -15,6 +15,9 @@ public:
 
 	void SetVisibility(const bool bIsVisible);
 	void UpdatePosition(const FVector& NewWorldPosition, const FRotator& NewOrientation);
+
+	UFUNCTION()
+	bool MoveCursorToMousePosition();
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Mesh, meta=(AllowPrivateAccess="true"))
