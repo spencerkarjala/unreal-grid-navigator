@@ -5,13 +5,13 @@
 
 class USplineMeshComponent;
 
-UCLASS()
-class GRIDNAVIGATOR_API AGridNavigatorCursor : public AActor
+UCLASS(Blueprintable, BlueprintType, ClassGroup=GridNavigator)
+class GRIDNAVIGATOR_API UGridNavigatorCursorComponent : public USceneComponent
 {
 	GENERATED_BODY()
 
 public:
-	AGridNavigatorCursor();
+	UGridNavigatorCursorComponent();
 
 	void SetVisibility(const bool bIsVisible);
 	void UpdatePosition(const FVector& NewWorldPosition, const FRotator& NewOrientation);
