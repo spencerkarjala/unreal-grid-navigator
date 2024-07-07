@@ -5,7 +5,7 @@
 
 class USplineMeshComponent;
 
-UCLASS(Blueprintable, BlueprintType, ClassGroup=GridNavigator)
+UCLASS(Blueprintable, BlueprintType, ClassGroup=GridNavigator, meta=(BlueprintSpawnableComponent))
 class GRIDNAVIGATOR_API UGridNavigatorCursorComponent : public USceneComponent
 {
 	GENERATED_BODY()
@@ -15,9 +15,6 @@ public:
 
 	void SetVisibility(const bool bIsVisible);
 	void UpdatePosition(const FVector& NewWorldPosition, const FRotator& NewOrientation);
-
-	UFUNCTION()
-	bool MoveCursorToMousePosition();
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Mesh, meta=(AllowPrivateAccess="true"))
