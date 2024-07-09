@@ -13,8 +13,11 @@ class GRIDNAVIGATOR_API UGridNavigatorCursorComponent : public USceneComponent
 public:
 	UGridNavigatorCursorComponent();
 
-	void SetVisibility(const bool bIsVisible);
-	void UpdatePosition(const FVector& NewWorldPosition, const FRotator& NewOrientation);
+	UFUNCTION(BlueprintCallable, Category="Cursor")
+	void UpdateVisibility(const bool NewVisibility);
+
+	UFUNCTION(BlueprintCallable, Category="Cursor")
+	void UpdatePosition(const FHitResult& HitResult);
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Mesh, meta=(AllowPrivateAccess="true"))
@@ -22,4 +25,10 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Mesh, meta=(AllowPrivateAccess="true"))
 	TObjectPtr<USplineMeshComponent> PathMeshComponent;
+
+private:
+	// todo: add these to some sort of config
+	float TodoCosOfMaxInclineAngle = 0.70710678118; // cos(45.0 deg)
+
+	FVector CurrCursorLocation = FVector(-99999.f);
 };
