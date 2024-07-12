@@ -42,83 +42,76 @@ UGridNavigatorCursorComponent::UGridNavigatorCursorComponent()
 	
 	DestinationMeshComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
 	DestinationMeshComponent->SetStaticMesh(DestinationMesh.Object);
+	DestinationMeshComponent->SetVisibility(true, true);
 	
 	PathMeshComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
 	PathMeshComponent->SetStaticMesh(PathMesh.Object);
+	PathMeshComponent->SetVisibility(true, true);
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
-void UGridNavigatorCursorComponent::UpdateVisibility(const bool NewVisibility)
-{
-	if (!IsValid(DestinationMeshComponent)) {
-		UE_LOG(LogGridNavigatorCursor, Warning, TEXT("Tried to SetIsActive on GridNavigatorCursor with no valid destination mesh"));
-		return;
-	}
-	if (!IsValid(PathMeshComponent)) {
-		UE_LOG(LogGridNavigatorCursor, Warning, TEXT("Tried to SetIsActive on GridNavigatorCursor with no valid path mesh"));
-		return;
-	}
-
-	DestinationMeshComponent->SetVisibility(NewVisibility, false);
-	PathMeshComponent->SetVisibility(NewVisibility, false);
-}
-
-// ReSharper disable once CppMemberFunctionMayBeConst
-void UGridNavigatorCursorComponent::UpdatePosition(const FHitResult& HitResult)
+bool UGridNavigatorCursorComponent::UpdatePositionByRaycast(const FHitResult& HitResult)
 {
 	const auto* ParentActor = GetOwner();
 	if (!IsValid(ParentActor)) {
 		UE_LOG(LogGridNavigatorCursor, Error, TEXT("Tried to UpdatePosition on GridNavigatorCursorComponent with no parent actor"));
-		return;
+		return false;
 	}
 	if (!IsValid(DestinationMeshComponent)) {
 		UE_LOG(LogGridNavigatorCursor, Warning, TEXT("Tried to UpdatePosition on GridNavigatorCursor with no destination mesh"));
-		return;
+		return false;
 	}
 	if (!IsValid(PathMeshComponent)) {
 		UE_LOG(LogGridNavigatorCursor, Warning, TEXT("Tried to UpdatePosition on GridNavigatorCursor with no path mesh"));
-		return;
+		return false;
 	}
 	if (!HitResult.IsValidBlockingHit()) {
-		UpdateVisibility(false);
-		return;
+		SetVisibility(false);
+		return true;
 	}
 
-	FVector HitLocationRounded = FVector(
-		round(HitResult.Location.X / 100.0) * 100.0,
-		round(HitResult.Location.Y / 100.0) * 100.0,
-		HitResult.Location.Z
+	return UpdatePositionByDestination(HitResult.Location);
+}
+
+bool UGridNavigatorCursorComponent::UpdatePositionByDestination(const FVector& WorldDestination, const FVector& DestNormal)
+{
+	FVector DestinationRounded = FVector(
+		round(WorldDestination.X / 100.0) * 100.0,
+		round(WorldDestination.Y / 100.0) * 100.0,
+		WorldDestination.Z
 	);
 
-	if ((HitLocationRounded - CurrCursorLocation).Length() < 2e-4) {
-		return;
+	if ((DestinationRounded - CurrCursorLocation).Length() < 2e-4) {
+		return true;
 	}
-	CurrCursorLocation = HitLocationRounded;
+	CurrCursorLocation = DestinationRounded;
 	
 	const FVector UpDir(0.0, 0.0, 1.0);
-	FVector HitNormal = HitResult.Normal;
+	FVector HitNormal = DestNormal;
 	HitNormal.Normalize();
 
 	const double CosOfUpToNormalAngle = FVector::DotProduct(UpDir, HitNormal);
 
 	if (CosOfUpToNormalAngle <= TodoCosOfMaxInclineAngle) {
-		UpdateVisibility(false);
-		return;
+		SetVisibility(false);
+		return true;
 	}
 	
 	FRotator UpVecToNormalRotation;
 	if (CosOfUpToNormalAngle < 1.0 - UE_KINDA_SMALL_NUMBER) {
 		UpVecToNormalRotation.Yaw = FMath::RadiansToDegrees(atan2(HitNormal.Y, HitNormal.X));
 		UpVecToNormalRotation.Pitch = FMath::RadiansToDegrees(-acos(CosOfUpToNormalAngle));
-		HitLocationRounded.Z = floor(HitResult.Location.Z / 50.0) * 50.0 + 25.0;
+		DestinationRounded.Z = floor(DestinationRounded.Z / 50.0) * 50.0 + 25.0;
 	}
 	
-	const auto LocalCursorDestinationPosition = HitLocationRounded;
+	const auto LocalCursorDestinationPosition = DestinationRounded;
 	// const auto LocalCursorDestinationPosition = HitLocationRounded - ParentActor->GetActorLocation();
 	DestinationMeshComponent->SetRelativeLocation(LocalCursorDestinationPosition);
 	DestinationMeshComponent->SetWorldRotation(UpVecToNormalRotation);
 	
-	UpdateVisibility(true);
+	SetVisibility(true);
+
+	return true;
 
 	// todo: fill out path spline mesh
 }
