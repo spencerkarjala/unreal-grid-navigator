@@ -49,31 +49,7 @@ UGridNavigatorCursorComponent::UGridNavigatorCursorComponent()
 	PathMeshComponent->SetVisibility(true, true);
 }
 
-// ReSharper disable once CppMemberFunctionMayBeConst
-bool UGridNavigatorCursorComponent::UpdatePositionByRaycast(const FHitResult& HitResult)
-{
-	const auto* ParentActor = GetOwner();
-	if (!IsValid(ParentActor)) {
-		UE_LOG(LogGridNavigatorCursor, Error, TEXT("Tried to UpdatePosition on GridNavigatorCursorComponent with no parent actor"));
-		return false;
-	}
-	if (!IsValid(DestinationMeshComponent)) {
-		UE_LOG(LogGridNavigatorCursor, Warning, TEXT("Tried to UpdatePosition on GridNavigatorCursor with no destination mesh"));
-		return false;
-	}
-	if (!IsValid(PathMeshComponent)) {
-		UE_LOG(LogGridNavigatorCursor, Warning, TEXT("Tried to UpdatePosition on GridNavigatorCursor with no path mesh"));
-		return false;
-	}
-	if (!HitResult.IsValidBlockingHit()) {
-		SetVisibility(false);
-		return true;
-	}
-
-	return UpdatePositionByDestination(HitResult.Location);
-}
-
-bool UGridNavigatorCursorComponent::UpdatePositionByDestination(const FVector& WorldDestination, const FVector& DestNormal)
+bool UGridNavigatorCursorComponent::UpdatePosition(const FVector& WorldDestination, const FVector& DestNormal)
 {
 	FVector DestinationRounded = FVector(
 		round(WorldDestination.X / 100.0) * 100.0,
@@ -81,7 +57,7 @@ bool UGridNavigatorCursorComponent::UpdatePositionByDestination(const FVector& W
 		WorldDestination.Z
 	);
 
-	if ((DestinationRounded - CurrCursorLocation).Length() < 2e-4) {
+	if ((DestinationRounded - CurrCursorLocation).Length() < TodoDistDeltaThreshold) {
 		return true;
 	}
 	CurrCursorLocation = DestinationRounded;
@@ -114,4 +90,15 @@ bool UGridNavigatorCursorComponent::UpdatePositionByDestination(const FVector& W
 	return true;
 
 	// todo: fill out path spline mesh
+}
+
+bool UGridNavigatorCursorComponent::ShouldUpdatePosition(const FVector& WorldDestination)
+{
+	FVector DestinationRounded = FVector(
+		round(WorldDestination.X / 100.0) * 100.0,
+		round(WorldDestination.Y / 100.0) * 100.0,
+		WorldDestination.Z
+	);
+	const float DistFromCurrCursorPosition = (DestinationRounded - CurrCursorLocation).Length();
+	return DistFromCurrCursorPosition < TodoDistDeltaThreshold;
 }
