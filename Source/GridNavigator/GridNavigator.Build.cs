@@ -39,6 +39,7 @@ public class GridNavigator : ModuleRules
 				"Slate",
 				"SlateCore",
 				"Projects",
+				"ProceduralMeshComponent",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

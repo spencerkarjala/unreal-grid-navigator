@@ -1,5 +1,7 @@
 #include "GridNavigatorCursorComponent.h"
 
+#include "ProceduralMeshComponent.h"
+#include "Components/SplineComponent.h"
 #include "Components/SplineMeshComponent.h"
 #include "Interfaces/IPluginManager.h"
 
@@ -14,9 +16,10 @@ UGridNavigatorCursorComponent::UGridNavigatorCursorComponent()
 		return;
 	}
 
-	PathMeshComponent = CreateDefaultSubobject<USplineMeshComponent>(TEXT("TopDownViewCursor.PathMesh"));
-	if (!IsValid(PathMeshComponent)) {
+	SplineComponent = CreateDefaultSubobject<USplineComponent>(TEXT("TopDownViewCursor.Path"));
+	if (!IsValid(SplineComponent)) {
 		UE_LOG(LogGridNavigatorCursor, Error, TEXT("Failed to instantiate PathMesh for GridNavigatorCursor"));
+		return;
 	}
 
 	const auto PluginBaseDir = IPluginManager::Get().FindPlugin(TEXT("GridNavigator"));
@@ -39,17 +42,20 @@ UGridNavigatorCursorComponent::UGridNavigatorCursorComponent()
 		UE_LOG(LogGridNavigatorCursor, Error, TEXT("Failed to instantiate default path mesh at '%s'"), *DefaultPathMeshLocation);
 		return;
 	}
+	PathMeshBase = PathMesh.Object;
 	
 	DestinationMeshComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
 	DestinationMeshComponent->SetStaticMesh(DestinationMesh.Object);
 	DestinationMeshComponent->SetVisibility(true, true);
-	
-	PathMeshComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
-	PathMeshComponent->SetStaticMesh(PathMesh.Object);
-	PathMeshComponent->SetVisibility(true, true);
+
 }
 
-bool UGridNavigatorCursorComponent::UpdatePosition(const FVector& WorldDestination, const FVector& DestNormal)
+void UGridNavigatorCursorComponent::PostInitProperties()
+{
+	Super::PostInitProperties();
+}
+
+bool UGridNavigatorCursorComponent::UpdatePosition(const TArray<FVector>& PathPoints, const FVector& WorldDestination, const FVector& DestNormal)
 {
 	FVector DestinationRounded = FVector(
 		round(WorldDestination.X / 100.0) * 100.0,
@@ -62,7 +68,7 @@ bool UGridNavigatorCursorComponent::UpdatePosition(const FVector& WorldDestinati
 	}
 	CurrCursorLocation = DestinationRounded;
 	
-	const FVector UpDir(0.0, 0.0, 1.0);
+	const FVector& UpDir = FVector::UpVector;
 	FVector HitNormal = DestNormal;
 	HitNormal.Normalize();
 
@@ -79,17 +85,17 @@ bool UGridNavigatorCursorComponent::UpdatePosition(const FVector& WorldDestinati
 		UpVecToNormalRotation.Pitch = FMath::RadiansToDegrees(-acos(CosOfUpToNormalAngle));
 		DestinationRounded.Z = floor(DestinationRounded.Z / 50.0) * 50.0 + 25.0;
 	}
+
+	UpdatePathMesh(PathPoints);
 	
 	const auto LocalCursorDestinationPosition = DestinationRounded;
-	// const auto LocalCursorDestinationPosition = HitLocationRounded - ParentActor->GetActorLocation();
+	// const auto LocalCursorDestinationPosition = DestinationRounded - GetOwner->GetActorLocation();
 	DestinationMeshComponent->SetRelativeLocation(LocalCursorDestinationPosition);
 	DestinationMeshComponent->SetWorldRotation(UpVecToNormalRotation);
-	
+
 	SetVisibility(true);
 
 	return true;
-
-	// todo: fill out path spline mesh
 }
 
 bool UGridNavigatorCursorComponent::ShouldUpdatePosition(const FVector& WorldDestination)
@@ -101,4 +107,31 @@ bool UGridNavigatorCursorComponent::ShouldUpdatePosition(const FVector& WorldDes
 	);
 	const float DistFromCurrCursorPosition = (DestinationRounded - CurrCursorLocation).Length();
 	return DistFromCurrCursorPosition < TodoDistDeltaThreshold;
+}
+
+bool UGridNavigatorCursorComponent::UpdatePathMesh(const TArray<FVector>& Points)
+{
+	for (int i = PathMeshComponents.Num() - 1; i >= 0; --i) {
+		auto& Component = PathMeshComponents[i];
+		Component->UnregisterComponent();
+		PathMeshComponents.RemoveAt(i);
+	}
+	
+	const int NumPoints = Points.Num();
+	for (int i = 1; i < NumPoints-1; ++i) {
+		USplineMeshComponent* NewSplineMeshComponent = NewObject<USplineMeshComponent>(this, USplineMeshComponent::StaticClass(), NAME_None, RF_Transient);
+		NewSplineMeshComponent->SetMobility(EComponentMobility::Movable);
+		NewSplineMeshComponent->SetupAttachment(this);
+		NewSplineMeshComponent->RegisterComponent();
+		NewSplineMeshComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
+		NewSplineMeshComponent->SetStaticMesh(PathMeshBase);
+		NewSplineMeshComponent->SetVisibility(true, true);
+
+		PathMeshComponents.Add(NewSplineMeshComponent);
+
+		NewSplineMeshComponent->SetStartPosition(Points[i-1], false);
+		NewSplineMeshComponent->SetEndPosition(Points[i], true);
+	}
+	
+	return true;
 }
