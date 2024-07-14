@@ -145,13 +145,18 @@ bool UGridNavigatorCursorComponent::UpdatePathMesh(const TArray<FVector>& Points
 
 	// set up spline mesh components that are already instantiated
 	for (int i = 0; i < NumInitialIterations; ++i) {
-		const auto& P0 = Points[i];
-		const auto& P1 = Points[i+1];
 		auto& PathMeshComponent = PathMeshComponents[i];
 		check(PathMeshComponent->IsValidLowLevel());
+
+		const auto& P0 = Points[i];
+		const auto& P1 = Points[i+1];
+		FVector SplineDirection = P1 - P0;
+		SplineDirection.Normalize();
 		
 		PathMeshComponent->SetStartPosition(P0);
+		PathMeshComponent->SetStartTangent(SplineDirection);
 		PathMeshComponent->SetEndPosition(P1);
+		PathMeshComponent->SetEndTangent(SplineDirection);
 		PathMeshComponent->SetVisibility(true);
 	}
 
