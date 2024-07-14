@@ -5,7 +5,6 @@
 
 class USplineMeshComponent;
 class USplineComponent;
-class UProceduralMeshComponent;
 
 UCLASS(Blueprintable, BlueprintType, ClassGroup=GridNavigator, meta=(BlueprintSpawnableComponent))
 class GRIDNAVIGATOR_API UGridNavigatorCursorComponent : public USceneComponent
@@ -19,13 +18,12 @@ public:
 
 	/**
 	 * @brief Sets the endpoint position of the GridNavigatorCursor using a world destination vector.
-	 * @param PathPoints The list of points defining the path that the cursor highlights
 	 * @param WorldDestination The path endpoint that the cursor highlights
 	 * @param DestNormal The normal vector of the ground geometry at the \p WorldDestination
 	 * @returns \b false if an error occurs while setting cursor position; \b true otherwise
 	 */
 	UFUNCTION(BlueprintCallable, Category="Cursor", meta=(ReturnDisplayName="Update Success"))
-	bool UpdatePosition(const TArray<FVector>& PathPoints, const FVector& WorldDestination, const FVector& DestNormal = FVector(0, 0, 1));
+	bool UpdatePosition(const FVector& WorldDestination, const FVector& DestNormal = FVector(0, 0, 1));
 
 	/**
 	 * @brief Checks cursor position against a world position to see if it needs to be updated.
@@ -38,9 +36,6 @@ public:
 protected:	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Mesh, meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UStaticMeshComponent> DestinationMeshComponent;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Mesh, meta=(AllowPrivateAccess="true"))
-	TObjectPtr<USplineComponent> SplineComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Mesh, meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UStaticMesh> PathMeshBase;
