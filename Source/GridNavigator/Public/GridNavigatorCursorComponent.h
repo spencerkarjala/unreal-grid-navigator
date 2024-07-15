@@ -33,6 +33,20 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Cursor", meta=(ReturnDisplayName="Should Update"))
 	bool ShouldUpdatePosition(const FVector& WorldDestination);
 
+	/**
+	 * @brief Updates the static mesh used to represent the destination point for the cursor
+	 * @param Mesh Static mesh to use for destination indicator
+	 */
+	UFUNCTION(BlueprintCallable, Category="Cursor")
+	void SetDestinationMesh(UStaticMesh* Mesh);
+
+	/**
+	 * @brief Updates the static mesh used internally by \c USplineMeshComponent
+	 * @param Mesh Static mesh for path splines to use
+	 */
+	UFUNCTION(BlueprintCallable, Category="Cursor")
+	void SetPathMesh(const UStaticMesh* Mesh);
+
 protected:	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Mesh, meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UStaticMeshComponent> DestinationMeshComponent;

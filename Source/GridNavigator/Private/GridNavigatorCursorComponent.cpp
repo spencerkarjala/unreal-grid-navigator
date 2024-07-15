@@ -11,13 +11,13 @@ DECLARE_LOG_CATEGORY_CLASS(LogGNCursorComponent, Log, All);
 UGridNavigatorCursorComponent::UGridNavigatorCursorComponent()
 {
 	DestinationMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GNCursorComponent.TargetMesh"));
-	if (!IsValid(DestinationMeshComponent)) {
+	if (!DestinationMeshComponent) {
 		UE_LOG(LogGNCursorComponent, Error, TEXT("Failed to instantiate TargetMesh for GridNavigatorCursor"));
 		return;
 	}
 
 	PathComponent = CreateDefaultSubobject<USplineComponent>(TEXT("GNCursorComponent.Path"));
-	if (!IsValid(PathComponent)) {
+	if (!PathComponent) {
 		UE_LOG(LogGNCursorComponent, Error, TEXT("Failed to instantiate Path for GridNavigatorCursor"))
 		return;
 	}
@@ -54,7 +54,7 @@ UGridNavigatorCursorComponent::UGridNavigatorCursorComponent()
 	for (int i = 0; i < 16; ++i) {
 		FString SplineMeshName = FString::Printf(TEXT("GNCursorComponent.PathMesh.%d"), i);
 		PathMeshComponents[i] = CreateDefaultSubobject<USplineMeshComponent>(*SplineMeshName);
-		if (!IsValid(PathMeshComponents[i])) {
+		if (!PathMeshComponents[i]) {
 			UE_LOG(LogGNCursorComponent, Error, TEXT("Failed to initialize PathMeshComponent with id '%s'"), *SplineMeshName);
 			return;
 		}
@@ -143,9 +143,24 @@ bool UGridNavigatorCursorComponent::ShouldUpdatePosition(const FVector& WorldDes
 	return DistFromCurrCursorPosition < TodoDistDeltaThreshold;
 }
 
+void UGridNavigatorCursorComponent::SetDestinationMesh(UStaticMesh* Mesh)
+{
+	if (!DestinationMeshComponent) {
+		UE_LOG(LogGNCursorComponent, Error, TEXT("Tried to SetDestinationMesh without a valid DestinationMeshComponent"));
+		return;
+	}
+	if (!IsValid(Mesh)) {
+		UE_LOG(LogGNCursorComponent, Error, TEXT("Tried to SetDestinationMesh with an invalid Mesh parameter"));
+		return;
+	}
+	DestinationMeshComponent->SetStaticMesh(Mesh);
+}
+
+void UGridNavigatorCursorComponent::SetPathMesh(const UStaticMesh* Mesh) {}
+
 bool UGridNavigatorCursorComponent::UpdatePath(const TArray<FVector>& Points)
 {
-	if (!PathComponent->IsValidLowLevel()) {
+	if (!PathComponent) {
 		UE_LOG(LogGNCursorComponent, Error, TEXT("Tried to UpdatePath without a valid PathComponent"));
 		return false;
 	}
@@ -161,7 +176,7 @@ bool UGridNavigatorCursorComponent::UpdatePath(const TArray<FVector>& Points)
 
 bool UGridNavigatorCursorComponent::UpdatePathMesh()
 {
-	if (!PathComponent->IsValidLowLevel()) {
+	if (!PathComponent) {
 		UE_LOG(LogGNCursorComponent, Error, TEXT("Tried to UpdatePathMesh without a valid PathComponen"));
 		return false;
 	}
@@ -174,7 +189,7 @@ bool UGridNavigatorCursorComponent::UpdatePathMesh()
 	// set up spline mesh components that are already instantiated
 	for (int i = 0; i < NumInitialIterations; ++i) {
 		auto& PathMeshComponent = PathMeshComponents[i];
-		check(PathMeshComponent->IsValidLowLevel());
+		check(PathMeshComponent);
 		
 		const FSplinePoint& P0 = PathComponent->GetSplinePointAt(i, ESplineCoordinateSpace::Local);
 		const FSplinePoint& P1 = PathComponent->GetSplinePointAt(i+1, ESplineCoordinateSpace::Local);
@@ -189,7 +204,7 @@ bool UGridNavigatorCursorComponent::UpdatePathMesh()
 	// reset excess meshes so they disappear when path has fewer segments than previous
 	for (int i = NumSegments; i < NumInstantiatedSegmentComponents; ++i) {
 		auto& PathMeshComponent = PathMeshComponents[i];
-		check(PathMeshComponent->IsValidLowLevel());
+		check(PathMeshComponent);
 
 		PathMeshComponent->SetStartPosition(FVector::ZeroVector, false);
 		PathMeshComponent->SetEndPosition(FVector::ZeroVector, false);
