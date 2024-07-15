@@ -1,6 +1,7 @@
 #include "GridNavigatorCursorComponent.h"
 
 #include "MappingServer.h"
+#include "Components/SplineComponent.h"
 #include "Components/SplineMeshComponent.h"
 #include "Interfaces/IPluginManager.h"
 
@@ -12,6 +13,12 @@ UGridNavigatorCursorComponent::UGridNavigatorCursorComponent()
 	DestinationMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GNCursorComponent.TargetMesh"));
 	if (!IsValid(DestinationMeshComponent)) {
 		UE_LOG(LogGNCursorComponent, Error, TEXT("Failed to instantiate TargetMesh for GridNavigatorCursor"));
+		return;
+	}
+
+	PathComponent = CreateDefaultSubobject<USplineComponent>(TEXT("GNCursorComponent.Path"));
+	if (!IsValid(PathComponent)) {
+		UE_LOG(LogGNCursorComponent, Error, TEXT("Failed to instantiate Path for GridNavigatorCursor"))
 		return;
 	}
 
@@ -42,9 +49,9 @@ UGridNavigatorCursorComponent::UGridNavigatorCursorComponent()
 	DestinationMeshComponent->SetMobility(EComponentMobility::Movable);
 	DestinationMeshComponent->SetVisibility(true, true);
 
-	// start with 8 splines, re-use and add more if needed
-	PathMeshComponents.SetNum(8);
-	for (int i = 0; i < 8; ++i) {
+	// start with 16 splines, re-use and add more if needed
+	PathMeshComponents.SetNum(16);
+	for (int i = 0; i < 16; ++i) {
 		FString SplineMeshName = FString::Printf(TEXT("GNCursorComponent.PathMesh.%d"), i);
 		PathMeshComponents[i] = CreateDefaultSubobject<USplineMeshComponent>(*SplineMeshName);
 		if (!IsValid(PathMeshComponents[i])) {
@@ -109,14 +116,13 @@ bool UGridNavigatorCursorComponent::UpdatePosition(const FVector& WorldDestinati
 		DestinationRounded.Z = floor(DestinationRounded.Z / 50.0) * 50.0 + 25.0;
 	}
 
-	bool UpdatePathMeshSuccess = UpdatePathMesh(PathPoints);
-	if (!UpdatePathMeshSuccess) {
+	bool UpdatePathSuccess = UpdatePath(PathPoints);
+	if (!UpdatePathSuccess) {
 		UE_LOG(LogGNCursorComponent, Error, TEXT("Unknown failure when trying to update PathMeshComponents"));
 		return false;
 	}
 	
 	const auto LocalCursorDestinationPosition = DestinationRounded;
-	// const auto LocalCursorDestinationPosition = DestinationRounded - GetOwner->GetActorLocation();
 	DestinationMeshComponent->SetRelativeLocation(LocalCursorDestinationPosition);
 	DestinationMeshComponent->SetWorldRotation(UpVecToNormalRotation);
 
@@ -137,55 +143,59 @@ bool UGridNavigatorCursorComponent::ShouldUpdatePosition(const FVector& WorldDes
 	return DistFromCurrCursorPosition < TodoDistDeltaThreshold;
 }
 
-bool UGridNavigatorCursorComponent::UpdatePathMesh(const TArray<FVector>& Points)
+bool UGridNavigatorCursorComponent::UpdatePath(const TArray<FVector>& Points)
 {
-	const int NumSegments = Points.Num() - 1;
-	const int NumActivePathMeshComponents = PathMeshComponents.Num();
-	const int NumInitialIterations = FMath::Min(NumSegments, NumActivePathMeshComponents);
+	if (!PathComponent->IsValidLowLevel()) {
+		UE_LOG(LogGNCursorComponent, Error, TEXT("Tried to UpdatePath without a valid PathComponent"));
+		return false;
+	}
+
+	PathComponent->ClearSplinePoints();
+	for (const auto& Point : Points) {
+		PathComponent->AddSplinePoint(Point, ESplineCoordinateSpace::Local, false);
+	}
+	PathComponent->UpdateSpline();
+
+	return UpdatePathMesh();
+}
+
+bool UGridNavigatorCursorComponent::UpdatePathMesh()
+{
+	if (!PathComponent->IsValidLowLevel()) {
+		UE_LOG(LogGNCursorComponent, Error, TEXT("Tried to UpdatePathMesh without a valid PathComponen"));
+		return false;
+	}
+	
+	const int NumSegments = PathComponent->GetNumberOfSplineSegments();
+	const int NumInstantiatedSegmentComponents = PathMeshComponents.Num();
+	const int NumInitialIterations = FMath::Min(NumSegments, NumInstantiatedSegmentComponents);
+	const FVector2D PathMeshScale(PathMeshScaleFactor);
 
 	// set up spline mesh components that are already instantiated
 	for (int i = 0; i < NumInitialIterations; ++i) {
 		auto& PathMeshComponent = PathMeshComponents[i];
 		check(PathMeshComponent->IsValidLowLevel());
-
-		const auto& P0 = Points[i];
-		const auto& P1 = Points[i+1];
-		FVector SplineDirection = P1 - P0;
-		SplineDirection.Normalize();
 		
-		PathMeshComponent->SetStartPosition(P0);
-		PathMeshComponent->SetStartTangent(SplineDirection);
-		PathMeshComponent->SetEndPosition(P1);
-		PathMeshComponent->SetEndTangent(SplineDirection);
+		const FSplinePoint& P0 = PathComponent->GetSplinePointAt(i, ESplineCoordinateSpace::Local);
+		const FSplinePoint& P1 = PathComponent->GetSplinePointAt(i+1, ESplineCoordinateSpace::Local);
+
+		PathMeshComponent->SetStartAndEnd(P0.Position, P0.LeaveTangent, P1.Position, P1.ArriveTangent, false);
+		PathMeshComponent->SetStartScale(PathMeshScale, false);
+		PathMeshComponent->SetEndScale(PathMeshScale, false);
+		PathMeshComponent->UpdateMesh();
 		PathMeshComponent->SetVisibility(true);
 	}
 
-	// if there are leftover spline mesh components, disable them
-	if (NumSegments < NumActivePathMeshComponents) {
-		for (int i = NumSegments; i < NumActivePathMeshComponents; ++i) {
-			auto& PathMeshComponent = PathMeshComponents[i];
-			check(PathMeshComponent->IsValidLowLevel());
+	// reset excess meshes so they disappear when path has fewer segments than previous
+	for (int i = NumSegments; i < NumInstantiatedSegmentComponents; ++i) {
+		auto& PathMeshComponent = PathMeshComponents[i];
+		check(PathMeshComponent->IsValidLowLevel());
 
-			PathMeshComponent->SetStartPosition(FVector::ZeroVector);
-			PathMeshComponent->SetEndPosition(FVector::ZeroVector);
-			PathMeshComponent->SetVisibility(false);
-		}
+		PathMeshComponent->SetStartPosition(FVector::ZeroVector, false);
+		PathMeshComponent->SetEndPosition(FVector::ZeroVector, false);
+		PathMeshComponent->UpdateMesh();
+		PathMeshComponent->SetVisibility(false);
 	}
-	// if there are leftover segments, add new spline mesh components to accommodate
-	else if (NumActivePathMeshComponents < NumSegments) {
-		for (int i = NumActivePathMeshComponents; i < NumSegments; ++i) {
-			const auto& P0 = Points[i];
-			const auto& P1 = Points[i+1];
-
-			FString SplineMeshName = FString::Printf(TEXT("GNCursorComponent.PathMesh.%d"), i);
-			auto* NewPathMeshComponent = NewObject<USplineMeshComponent>(this, USplineMeshComponent::StaticClass(), *SplineMeshName);
-			NewPathMeshComponent->AttachToComponent(this, FAttachmentTransformRules::KeepRelativeTransform);
-			NewPathMeshComponent->RegisterComponent();
-			NewPathMeshComponent->SetStaticMesh(PathMeshBase);
-			NewPathMeshComponent->SetStartPosition(P0);
-			NewPathMeshComponent->SetEndPosition(P1);
-		}
-	} 
 	
 	return true;
 }

@@ -43,8 +43,15 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Mesh, meta=(AllowPrivateAccess="true"))
 	TArray<TObjectPtr<USplineMeshComponent>> PathMeshComponents;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Mesh, meta=(AllowPrivateAccess="true"))
+	float PathMeshScaleFactor = 0.05f;
+
 private:
-	bool UpdatePathMesh(const TArray<FVector>& Points);
+	bool UpdatePath(const TArray<FVector>& Points);
+	bool UpdatePathMesh();
+
+	UPROPERTY()
+	TObjectPtr<USplineComponent> PathComponent;
 	
 	// todo: add these to some sort of config
 	const float TodoCosOfMaxInclineAngle = 0.70710678118; // cos(45.0 deg)
