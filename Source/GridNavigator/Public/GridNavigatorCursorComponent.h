@@ -20,7 +20,7 @@ public:
 	 * @brief Sets the endpoint position of the GridNavigatorCursor using a world destination vector.
 	 * @param WorldDestination The path endpoint that the cursor highlights
 	 * @param DestNormal The normal vector of the ground geometry at the \p WorldDestination
-	 * @returns \b false if an error occurs while setting cursor position; \b true otherwise
+	 * @returns \c false if an error occurs while setting cursor position; \c true otherwise
 	 */
 	UFUNCTION(BlueprintCallable, Category="Cursor", meta=(ReturnDisplayName="Update Success"))
 	bool UpdatePosition(const FVector& WorldDestination, const FVector& DestNormal = FVector(0, 0, 1));
@@ -28,7 +28,7 @@ public:
 	/**
 	 * @brief Checks cursor position against a world position to see if it needs to be updated.
 	 * @param WorldDestination The world position to use to see if the cursor needs to update
-	 * @return \b true if new \p WorldDestination results in a cursor update; \b false otherwise
+	 * @return \c true if new \p WorldDestination results in a cursor update; \c false otherwise
 	 */
 	UFUNCTION(BlueprintCallable, Category="Cursor", meta=(ReturnDisplayName="Should Update"))
 	bool ShouldUpdatePosition(const FVector& WorldDestination);
@@ -36,16 +36,18 @@ public:
 	/**
 	 * @brief Updates the static mesh used to represent the destination point for the cursor
 	 * @param Mesh Static mesh to use for destination indicator
+	 * @returns \c true if update was successful; \c false otherwise
 	 */
 	UFUNCTION(BlueprintCallable, Category="Cursor")
-	void SetDestinationMesh(UStaticMesh* Mesh);
+	bool SetDestinationMesh(UStaticMesh* Mesh);
 
 	/**
 	 * @brief Updates the static mesh used internally by \c USplineMeshComponent
 	 * @param Mesh Static mesh for path splines to use
+	 * @returns \c true if update was successful; \c false otherwise
 	 */
 	UFUNCTION(BlueprintCallable, Category="Cursor")
-	void SetPathMesh(const UStaticMesh* Mesh);
+	bool SetPathMesh(UStaticMesh* Mesh);
 
 protected:	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Mesh, meta=(AllowPrivateAccess="true"))

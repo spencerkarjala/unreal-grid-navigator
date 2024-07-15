@@ -143,20 +143,41 @@ bool UGridNavigatorCursorComponent::ShouldUpdatePosition(const FVector& WorldDes
 	return DistFromCurrCursorPosition < TodoDistDeltaThreshold;
 }
 
-void UGridNavigatorCursorComponent::SetDestinationMesh(UStaticMesh* Mesh)
+bool UGridNavigatorCursorComponent::SetDestinationMesh(UStaticMesh* Mesh)
 {
 	if (!DestinationMeshComponent) {
 		UE_LOG(LogGNCursorComponent, Error, TEXT("Tried to SetDestinationMesh without a valid DestinationMeshComponent"));
-		return;
+		return false;
 	}
 	if (!IsValid(Mesh)) {
 		UE_LOG(LogGNCursorComponent, Error, TEXT("Tried to SetDestinationMesh with an invalid Mesh parameter"));
-		return;
+		return false;
 	}
+	
 	DestinationMeshComponent->SetStaticMesh(Mesh);
+	return true;
 }
 
-void UGridNavigatorCursorComponent::SetPathMesh(const UStaticMesh* Mesh) {}
+bool UGridNavigatorCursorComponent::SetPathMesh(UStaticMesh* Mesh)
+{
+	if (!IsValid(Mesh)) {
+		UE_LOG(LogGNCursorComponent, Error, TEXT("Tried to SetPathMesh with an invalid Mesh parameter"));
+		return false;
+	}
+	for (const TObjectPtr<USplineMeshComponent>& PathMeshComponent : PathMeshComponents) {
+		if (!PathMeshComponent) {
+			UE_LOG(LogGNCursorComponent, Error, TEXT("Tried to SetPathMesh with at least one invalid PathMeshComponent"));
+			return false;
+		}
+	}
+	
+	PathMeshBase = Mesh;
+	for (const auto& PathMeshComponent : PathMeshComponents) {
+		PathMeshComponent->SetStaticMesh(PathMeshBase);
+	}
+
+	return true;
+}
 
 bool UGridNavigatorCursorComponent::UpdatePath(const TArray<FVector>& Points)
 {
