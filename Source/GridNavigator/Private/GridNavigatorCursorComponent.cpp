@@ -49,9 +49,9 @@ UGridNavigatorCursorComponent::UGridNavigatorCursorComponent()
 	DestinationMeshComponent->SetMobility(EComponentMobility::Movable);
 	DestinationMeshComponent->SetVisibility(true, true);
 
-	// start with 16 splines, re-use and add more if needed
-	PathMeshComponents.SetNum(16);
-	for (int i = 0; i < 16; ++i) {
+	// start with 4 splines, re-use and add more if needed
+	PathMeshComponents.SetNum(4);
+	for (int i = 0; i < 4; ++i) {
 		FString SplineMeshName = FString::Printf(TEXT("GNCursorComponent.PathMesh.%d"), i);
 		PathMeshComponents[i] = CreateDefaultSubobject<USplineMeshComponent>(*SplineMeshName);
 		if (!PathMeshComponents[i]) {
@@ -61,7 +61,7 @@ UGridNavigatorCursorComponent::UGridNavigatorCursorComponent()
 	
 		PathMeshComponents[i]->SetCollisionResponseToAllChannels(ECR_Ignore);
 		PathMeshComponents[i]->SetStaticMesh(PathMeshBase);
-		PathMeshComponents[i]->SetVisibility(true);
+		PathMeshComponents[i]->SetVisibility(false);
 	}
 }
 
@@ -203,12 +203,30 @@ bool UGridNavigatorCursorComponent::UpdatePathMesh()
 	}
 	
 	const int NumSegments = PathComponent->GetNumberOfSplineSegments();
-	const int NumInstantiatedSegmentComponents = PathMeshComponents.Num();
-	const int NumInitialIterations = FMath::Min(NumSegments, NumInstantiatedSegmentComponents);
+	int NumInstantiatedSegmentComponents = PathMeshComponents.Num();
+
+	// only runs in the case that NumSegments is more than the available number of mesh components available,
+	// in which case new mesh components are created and instantiated
+	for (int i = NumInstantiatedSegmentComponents; i < NumSegments; ++i) {
+		FString SplineMeshName = FString::Printf(TEXT("GNCursorComponent.PathMesh.%d"), i);
+		auto* NewPathMeshComponent = NewObject<USplineMeshComponent>(this, USplineMeshComponent::StaticClass(), *SplineMeshName);
+		check(NewPathMeshComponent);
+		
+		NewPathMeshComponent->SetMobility(EComponentMobility::Movable);
+		NewPathMeshComponent->AttachToComponent(this, FAttachmentTransformRules::KeepWorldTransform);
+		NewPathMeshComponent->RegisterComponent();
+		NewPathMeshComponent->SetStaticMesh(PathMeshBase);
+		NewPathMeshComponent->SetVisibility(true);
+
+		PathMeshComponents.Add(NewPathMeshComponent);
+	}
+	
+	NumInstantiatedSegmentComponents = PathMeshComponents.Num();
+	const int NumIterations = FMath::Min(NumSegments, NumInstantiatedSegmentComponents);
 	const FVector2D PathMeshScale(PathMeshScaleFactor);
 
 	// set up spline mesh components that are already instantiated
-	for (int i = 0; i < NumInitialIterations; ++i) {
+	for (int i = 0; i < NumIterations; ++i) {
 		auto& PathMeshComponent = PathMeshComponents[i];
 		check(PathMeshComponent);
 		
