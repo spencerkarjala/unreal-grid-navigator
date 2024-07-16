@@ -75,7 +75,8 @@ void FMapAdjacencyList::DrawDebug(const UWorld& World)
 				&World,
 				FVector(FromNode.X * 100.0, FromNode.Y * 100.0, FromNode.Height),
 				FVector(ToNode.X   * 100.0, ToNode.Y   * 100.0, ToNode.Height),
-				DebugLineColor
+				DebugLineColor,
+				true
 			);
 		}
 	}

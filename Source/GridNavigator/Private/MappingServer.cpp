@@ -100,12 +100,14 @@ void FMappingServer::RemapFromWorld(const UWorld& World)
 				}
 
 				const float HeightDelta = FMath::Abs(NodeHeight - NeighborHeight);
+				const bool IsDiagonal = (NeighborI != 0) && (NeighborJ != 0); 
+				
 				FMapAdjacencyList::EMapEdgeType EdgeType = FMapAdjacencyList::EMapEdgeType::None;
 
 				if (HeightDelta <= 1.0) {
 					EdgeType = FMapAdjacencyList::EMapEdgeType::Direct;
 				}
-				else if (HeightDelta <= 30.0) {
+				else if (HeightDelta <= 51.0 && !IsDiagonal) {
 					EdgeType = FMapAdjacencyList::EMapEdgeType::Slope;
 				}
 				else if (NodeHeight < NeighborHeight) {
@@ -133,11 +135,12 @@ void FMappingServer::RemapFromWorld(const UWorld& World)
 						const float NeighborSlopeZ = FMath::Abs(NeighborSideSubGridLocation.Z - NeighborHeight);
 
 						const bool SlopesAreEqual = FMath::Abs(NodeSlopeZ - NeighborSlopeZ) < 1.0;
+						const bool SlopesAreFlat = NodeSlopeZ + NeighborSlopeZ < 5.0;
 
-						if (SlopesAreEqual && NodeHeight < NeighborHeight) {
+						if (SlopesAreEqual && SlopesAreFlat && NodeHeight < NeighborHeight) {
 							EdgeType = FMapAdjacencyList::EMapEdgeType::CliffUp;
 						}
-						else if (SlopesAreEqual && NodeHeight > NeighborHeight) {
+						else if (SlopesAreEqual && SlopesAreFlat && NodeHeight > NeighborHeight) {
 							EdgeType = FMapAdjacencyList::EMapEdgeType::CliffDown;
 						}
 					}
