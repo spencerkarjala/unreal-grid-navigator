@@ -160,18 +160,24 @@ void FMappingServer::RemapFromWorld(const UWorld& World)
 					check(DidMidpointTraceHit);
 
 					const float MidpointHeight = MidpointHitResult.Location.Z;
+					const float AverageHeight = (NodeHeight + NeighborHeight) / 2.f;
 
-					const bool NodeIsFlatSide     = IsRoughlyEqual(NodeHeight, MidpointHeight, 1.0);
-					const bool NeighborIsFlatSide = !NodeIsFlatSide;
-					const bool NodeIsLowerSide     = NodeHeight < NeighborHeight;
-					const bool NeighborIsLowerSide = !NodeIsLowerSide;
+					const bool IsMiddleOfSlope = IsRoughlyEqual(MidpointHeight, AverageHeight, 1.0);
 
-					// truth table time
-					// should probably refactor this to just use an array lookup
-					if      (NodeIsFlatSide     && NodeIsLowerSide)     EdgeType = FMapAdjacencyList::EMapEdgeType::SlopeBottom;
-					else if (NodeIsFlatSide     && NeighborIsLowerSide) EdgeType = FMapAdjacencyList::EMapEdgeType::SlopeTop;
-					else if (NeighborIsFlatSide && NodeIsLowerSide)     EdgeType = FMapAdjacencyList::EMapEdgeType::SlopeTop;
-					else if (NeighborIsFlatSide && NeighborIsLowerSide) EdgeType = FMapAdjacencyList::EMapEdgeType::SlopeBottom;
+					// if current edge is starting or ending slope, then update its edge type to match that
+					if (!IsMiddleOfSlope) {
+						const bool NodeIsFlatSide     = IsRoughlyEqual(NodeHeight, MidpointHeight, 1.0);
+						const bool NeighborIsFlatSide = !NodeIsFlatSide;
+						const bool NodeIsLowerSide     = NodeHeight < NeighborHeight;
+						const bool NeighborIsLowerSide = !NodeIsLowerSide;
+
+						// truth table time
+						// should probably refactor this to just use an array lookup
+						if      (NodeIsFlatSide     && NodeIsLowerSide)     EdgeType = FMapAdjacencyList::EMapEdgeType::SlopeBottom;
+						else if (NodeIsFlatSide     && NeighborIsLowerSide) EdgeType = FMapAdjacencyList::EMapEdgeType::SlopeTop;
+						else if (NeighborIsFlatSide && NodeIsLowerSide)     EdgeType = FMapAdjacencyList::EMapEdgeType::SlopeTop;
+						else if (NeighborIsFlatSide && NeighborIsLowerSide) EdgeType = FMapAdjacencyList::EMapEdgeType::SlopeBottom;
+					}
 				}
 			
 				Map.CreateEdge(
