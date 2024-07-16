@@ -1,18 +1,18 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GridNavigatorCursorComponent.generated.h"
+#include "GNCursorComponent.generated.h"
 
 class USplineMeshComponent;
 class USplineComponent;
 
 UCLASS(Blueprintable, BlueprintType, ClassGroup=GridNavigator, meta=(BlueprintSpawnableComponent))
-class GRIDNAVIGATOR_API UGridNavigatorCursorComponent : public USceneComponent
+class GRIDNAVIGATOR_API UGNCursorComponent : public USceneComponent
 {
 	GENERATED_BODY()
 
 public:
-	UGridNavigatorCursorComponent();
+	UGNCursorComponent();
 	
 	virtual void PostInitProperties() override;
 

@@ -1,4 +1,4 @@
-#include "GridNavigatorCursorComponent.h"
+#include "GNCursorComponent.h"
 
 #include "MappingServer.h"
 #include "Components/SplineComponent.h"
@@ -8,7 +8,7 @@
 DECLARE_LOG_CATEGORY_CLASS(LogGNCursorComponent, Log, All);
 
 // todo: make default mesh destinations configurable through project settings
-UGridNavigatorCursorComponent::UGridNavigatorCursorComponent()
+UGNCursorComponent::UGNCursorComponent()
 {
 	DestinationMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GNCursorComponent.TargetMesh"));
 	if (!DestinationMeshComponent) {
@@ -65,12 +65,12 @@ UGridNavigatorCursorComponent::UGridNavigatorCursorComponent()
 	}
 }
 
-void UGridNavigatorCursorComponent::PostInitProperties()
+void UGNCursorComponent::PostInitProperties()
 {
 	Super::PostInitProperties();
 }
 
-bool UGridNavigatorCursorComponent::UpdatePosition(const FVector& WorldDestination, const FVector& DestNormal)
+bool UGNCursorComponent::UpdatePosition(const FVector& WorldDestination, const FVector& DestNormal)
 {
 	FVector DestinationRounded = FVector(
 		round(WorldDestination.X / 100.0) * 100.0,
@@ -132,7 +132,7 @@ bool UGridNavigatorCursorComponent::UpdatePosition(const FVector& WorldDestinati
 	return true;
 }
 
-bool UGridNavigatorCursorComponent::ShouldUpdatePosition(const FVector& WorldDestination)
+bool UGNCursorComponent::ShouldUpdatePosition(const FVector& WorldDestination)
 {
 	FVector DestinationRounded = FVector(
 		round(WorldDestination.X / 100.0) * 100.0,
@@ -143,7 +143,7 @@ bool UGridNavigatorCursorComponent::ShouldUpdatePosition(const FVector& WorldDes
 	return DistFromCurrCursorPosition < TodoDistDeltaThreshold;
 }
 
-bool UGridNavigatorCursorComponent::SetDestinationMesh(UStaticMesh* Mesh)
+bool UGNCursorComponent::SetDestinationMesh(UStaticMesh* Mesh)
 {
 	if (!DestinationMeshComponent) {
 		UE_LOG(LogGNCursorComponent, Error, TEXT("Tried to SetDestinationMesh without a valid DestinationMeshComponent"));
@@ -158,7 +158,7 @@ bool UGridNavigatorCursorComponent::SetDestinationMesh(UStaticMesh* Mesh)
 	return true;
 }
 
-bool UGridNavigatorCursorComponent::SetPathMesh(UStaticMesh* Mesh)
+bool UGNCursorComponent::SetPathMesh(UStaticMesh* Mesh)
 {
 	if (!IsValid(Mesh)) {
 		UE_LOG(LogGNCursorComponent, Error, TEXT("Tried to SetPathMesh with an invalid Mesh parameter"));
@@ -179,7 +179,7 @@ bool UGridNavigatorCursorComponent::SetPathMesh(UStaticMesh* Mesh)
 	return true;
 }
 
-bool UGridNavigatorCursorComponent::UpdatePath(const TArray<FVector>& Points)
+bool UGNCursorComponent::UpdatePath(const TArray<FVector>& Points)
 {
 	if (!PathComponent) {
 		UE_LOG(LogGNCursorComponent, Error, TEXT("Tried to UpdatePath without a valid PathComponent"));
@@ -195,7 +195,7 @@ bool UGridNavigatorCursorComponent::UpdatePath(const TArray<FVector>& Points)
 	return UpdatePathMesh();
 }
 
-bool UGridNavigatorCursorComponent::UpdatePathMesh()
+bool UGNCursorComponent::UpdatePathMesh()
 {
 	if (!PathComponent) {
 		UE_LOG(LogGNCursorComponent, Error, TEXT("Tried to UpdatePathMesh without a valid PathComponen"));
