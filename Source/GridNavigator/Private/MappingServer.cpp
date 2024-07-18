@@ -41,18 +41,151 @@ void FMappingServer::RemapFromWorld(const UWorld& World)
 {
 	constexpr int HalfMapSize = ASSUMED_MAX_MAP_SIZE / 2;
 	constexpr int Layer = 0;
-	const TArray<TPair<int, int>> Neighbors = {{1, 0}, {1, 1},{0, 1},{-1, 1},{-1, 0},{-1, -1},{0, -1},{1, -1}};
 
-	this->Map.Clear();
+	Map.Clear();
 
-	for (int i = -HalfMapSize; i <= HalfMapSize; ++i) {
-		for (int j = -HalfMapSize; j < HalfMapSize; ++j) {
+	const FVector LowerBound(-HalfMapSize, -HalfMapSize, Layer);
+	const FVector UpperBound(HalfMapSize, HalfMapSize, Layer);
+
+	PopulateMap(World, FBox(LowerBound, UpperBound));
+}
+
+
+TArray<FVector> FMappingServer::FindPath(const FVector& From, const FVector& To)
+{
+	FVector2f FromWorldXY(From.X, From.Y);
+	FVector2f ToWorldXY(To.X, To.Y);
+
+	FIntVector2 FromGridCoord = WorldToGridIndex(FromWorldXY);
+	FIntVector2 ToGridCoord   = WorldToGridIndex(ToWorldXY);
+	
+	const TArray<FVector> IndexPoints = Map.FindPath(FromGridCoord, ToGridCoord);
+
+	// map (I,J,Z) triplets to (X,Y,Z) triplets
+	TArray<FVector> WorldPoints;
+	for (const FVector& Point : IndexPoints) {
+		FVector2f PointIndex(Point.X, Point.Y);
+		FVector2f PointWorldXY = GridIndexToWorld(PointIndex);
+		FVector PointWorld(PointWorldXY.X, PointWorldXY.Y, Point.Z);
+		WorldPoints.Add(PointWorld);
+	}
+
+	return WorldPoints;
+}
+
+TPair<TArray<FVector>, TArray<FVector>> FMappingServer::FindPath(const FVector& From, const FVector& To, const float DistanceBudget)
+{
+	TArray<FVector> Path = FindPath(From, To);
+	TArray<FVector> NavigablePoints;
+	TArray<FVector> FilteredPoints;
+	
+	float TotalDistance = 0.f;
+	const float AvailableMoveDistance = DistanceBudget;
+
+	if (Path.Num() > 0) {
+		NavigablePoints.Add(Path[0]);
+	}
+	
+	for (int i = 1; i < Path.Num(); ++i) {
+		const auto P0 = Path[i-1];
+		const auto P1 = Path[i];
+		const float DistanceP0P1 = (P1 - P0).Size();
+
+		// case 1: all points on the line [P0,P1) are within the distance budget
+		if (TotalDistance + DistanceP0P1 <= AvailableMoveDistance) {
+			NavigablePoints.Add(P1);
+		}
+		// case 2: all points on the line [P0,P1) are outside the distance budget
+		else if (AvailableMoveDistance <= TotalDistance) {
+			FilteredPoints.Add(P1);
+		}
+		// case 3: at some point on the line [P0,P1), move budget runs out
+		else if (TotalDistance < AvailableMoveDistance) {
+			const float RemainingDistanceBudget = AvailableMoveDistance - TotalDistance;
+			ensure(0.f < RemainingDistanceBudget && RemainingDistanceBudget < DistanceP0P1);
+			// lerp to find crossover from in-budget to out-of-budget
+			const auto P2 = P0 + (P1 - P0) * (RemainingDistanceBudget / DistanceP0P1);
+
+			NavigablePoints.Add(P2);
+			FilteredPoints.Add(P1);
+		}
+
+		TotalDistance += DistanceP0P1;
+	}
+
+	return { NavigablePoints, FilteredPoints };
+}
+
+FVector FMappingServer::RoundToGrid(const FVector& Value)
+{
+	return FVector(
+		round(Value.X / 100.0) * 100.00,
+		round(Value.Y / 100.0) * 100.00,
+		round(Value.Z / 25.0) * 25.0
+	);
+}
+
+FVector FMappingServer::TruncToGrid(const FVector& Value)
+{
+	return FVector(
+		floor(Value.X / 100.0) * 100.0,
+		floor(Value.Y / 100.0) * 100.0,
+		floor(Value.Z / 25.0) * 25.0
+	);
+}
+
+FString FMappingServer::Stringify()
+{
+	return this->Map.Stringify();
+}
+
+void FMappingServer::DrawDebug(const UWorld& World)
+{
+	Map.DrawDebug(World);
+}
+
+FIntVector2 FMappingServer::WorldToGridIndex(const FVector2f& WorldCoord)
+{
+	return FIntVector2(
+		FMath::RoundToInt(WorldCoord.X / static_cast<float>(ASSUMED_GRID_SPACING)),
+		FMath::RoundToInt(WorldCoord.Y / static_cast<float>(ASSUMED_GRID_SPACING))
+	);
+}
+
+FVector2f FMappingServer::GridIndexToWorld(const FVector2f& IndexCoord)
+{
+	return IndexCoord * ASSUMED_GRID_SPACING;
+}
+
+FVector2f FMappingServer::SubGridIndexToWorld(const FVector2f& IndexCoord, FIntVector2 Direction, const float Alpha)
+{
+	// make sure direction vectors only include {-1,0,1}
+	FVector2f UnitDirection = FVector2f(Direction.X, Direction.Y);
+	UnitDirection.Normalize();
+	UnitDirection = FVector2f(FMath::RoundToFloat(UnitDirection.X), FMath::RoundToFloat(UnitDirection.Y));
+
+	FVector2f WorldCoords(IndexCoord.X * ASSUMED_GRID_SPACING, IndexCoord.Y * ASSUMED_GRID_SPACING);
+	
+	return WorldCoords + UnitDirection * Alpha * ASSUMED_GRID_SPACING;
+}
+
+void FMappingServer::PopulateMap(const UWorld& World, const FBox& BoundingBox)
+{
+	const TArray<TPair<int, int>> Neighbors = {{1, 0}, {1, 1},{0, 1},{-1, 1},{-1, 0},{-1, -1},{0, -1},{1, -1} };
+	const auto& MinP = BoundingBox.Min;
+	const auto& MaxP = BoundingBox.Max;
+
+	for (int i = MinP.X; i <= MaxP.X; ++i) {
+		for (int j = MinP.Y; j <= MaxP.Y; ++j) {
 			FHitResult HitResult(ForceInit);
 			const bool NodeIJExists = FloorTrace(i, j, HitResult, World);
 			
 			if (!NodeIJExists) {
 				continue;
 			}
+
+			// const int Layer = round(HitResult.Location.Z / 25.0);
+			constexpr int Layer = 0;
 			
 			Map.AddNode(i, j, Layer, HitResult.Location.Z);
 
@@ -188,114 +321,5 @@ void FMappingServer::RemapFromWorld(const UWorld& World)
 			}
 		}
 	}
-}
-
-TArray<FVector> FMappingServer::FindPath(const FVector& From, const FVector& To)
-{
-	FVector2f FromWorldXY(From.X, From.Y);
-	FVector2f ToWorldXY(To.X, To.Y);
-
-	FIntVector2 FromGridCoord = WorldToGridIndex(FromWorldXY);
-	FIntVector2 ToGridCoord   = WorldToGridIndex(ToWorldXY);
-	
-	const TArray<FVector> IndexPoints = Map.FindPath(FromGridCoord, ToGridCoord);
-
-	// map (I,J,Z) triplets to (X,Y,Z) triplets
-	TArray<FVector> WorldPoints;
-	for (const FVector& Point : IndexPoints) {
-		FVector2f PointIndex(Point.X, Point.Y);
-		FVector2f PointWorldXY = GridIndexToWorld(PointIndex);
-		FVector PointWorld(PointWorldXY.X, PointWorldXY.Y, Point.Z);
-		WorldPoints.Add(PointWorld);
-	}
-
-	return WorldPoints;
-}
-
-TPair<TArray<FVector>, TArray<FVector>> FMappingServer::FindPath(const FVector& From, const FVector& To, const float DistanceBudget)
-{
-	TArray<FVector> Path = FindPath(From, To);
-	TArray<FVector> NavigablePoints;
-	TArray<FVector> FilteredPoints;
-	
-	float TotalDistance = 0.f;
-	const float AvailableMoveDistance = DistanceBudget;
-
-	if (Path.Num() > 0) {
-		NavigablePoints.Add(Path[0]);
-	}
-	
-	for (int i = 1; i < Path.Num(); ++i) {
-		const auto P0 = Path[i-1];
-		const auto P1 = Path[i];
-		const float DistanceP0P1 = (P1 - P0).Size();
-
-		// case 1: all points on the line [P0,P1) are within the distance budget
-		if (TotalDistance + DistanceP0P1 <= AvailableMoveDistance) {
-			NavigablePoints.Add(P1);
-		}
-		// case 2: all points on the line [P0,P1) are outside the distance budget
-		else if (AvailableMoveDistance <= TotalDistance) {
-			FilteredPoints.Add(P1);
-		}
-		// case 3: at some point on the line [P0,P1), move budget runs out
-		else if (TotalDistance < AvailableMoveDistance) {
-			const float RemainingDistanceBudget = AvailableMoveDistance - TotalDistance;
-			ensure(0.f < RemainingDistanceBudget && RemainingDistanceBudget < DistanceP0P1);
-			// lerp to find crossover from in-budget to out-of-budget
-			const auto P2 = P0 + (P1 - P0) * (RemainingDistanceBudget / DistanceP0P1);
-
-			NavigablePoints.Add(P2);
-			FilteredPoints.Add(P1);
-		}
-
-		TotalDistance += DistanceP0P1;
-	}
-
-	return { NavigablePoints, FilteredPoints };
-}
-
-FVector FMappingServer::RoundToGrid(const FVector& Value)
-{
-	return FVector(
-		round(Value.X / 100.0) * 100.00,
-		round(Value.Y / 100.0) * 100.00,
-		round(Value.Z / 25.0) * 25.0
-	);
-}
-
-FString FMappingServer::Stringify()
-{
-	return this->Map.Stringify();
-}
-
-void FMappingServer::DrawDebug(const UWorld& World)
-{
-	Map.DrawDebug(World);
-}
-
-FIntVector2 FMappingServer::WorldToGridIndex(const FVector2f& WorldCoord)
-{
-	return FIntVector2(
-		FMath::RoundToInt(WorldCoord.X / static_cast<float>(ASSUMED_GRID_SPACING)),
-		FMath::RoundToInt(WorldCoord.Y / static_cast<float>(ASSUMED_GRID_SPACING))
-	);
-}
-
-FVector2f FMappingServer::GridIndexToWorld(const FVector2f& IndexCoord)
-{
-	return IndexCoord * ASSUMED_GRID_SPACING;
-}
-
-FVector2f FMappingServer::SubGridIndexToWorld(const FVector2f& IndexCoord, FIntVector2 Direction, const float Alpha)
-{
-	// make sure direction vectors only include {-1,0,1}
-	FVector2f UnitDirection = FVector2f(Direction.X, Direction.Y);
-	UnitDirection.Normalize();
-	UnitDirection = FVector2f(FMath::RoundToFloat(UnitDirection.X), FMath::RoundToFloat(UnitDirection.Y));
-
-	FVector2f WorldCoords(IndexCoord.X * ASSUMED_GRID_SPACING, IndexCoord.Y * ASSUMED_GRID_SPACING);
-	
-	return WorldCoords + UnitDirection * Alpha * ASSUMED_GRID_SPACING;
 }
 

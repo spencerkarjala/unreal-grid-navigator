@@ -21,6 +21,7 @@ public:
 	TPair<TArray<FVector>, TArray<FVector>> FindPath(const FVector& From, const FVector& To, const float DistanceBudget);
 	
 	static FVector RoundToGrid(const FVector& Value);
+	static FVector TruncToGrid(const FVector& Value);
 	
 	FString Stringify();
 	void DrawDebug(const UWorld& World);
@@ -40,6 +41,8 @@ public:
 
 private:
 	FMappingServer() {}
+
+	void PopulateMap(const UWorld& World, const FBox& BoundingBox);
 
 	FMapAdjacencyList Map;
 
