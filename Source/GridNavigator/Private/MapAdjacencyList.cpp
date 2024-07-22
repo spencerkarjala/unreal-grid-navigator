@@ -144,11 +144,11 @@ TArray<FVector> FMapAdjacencyList::FindPath(const FIntVector2& From, const FIntV
 			}
 
 			if (!Nodes.Contains(Edge.InID)) {
-				UE_LOG(LogMapAdjacencyList, Error, TEXT("FindPath failed; no input node %d found for edge (%s)"), Edge.InID, *Edge.ToString());
+				UE_LOG(LogMapAdjacencyList, Error, TEXT("FindPath failed; no input node %lld found for edge (%s)"), Edge.InID, *Edge.ToString());
 				continue;
 			}
 			if (!Nodes.Contains(Edge.OutID)) {
-				UE_LOG(LogMapAdjacencyList, Error, TEXT("FindPath failed; no output node %d found for edge (%s)"), Edge.OutID, *Edge.ToString());
+				UE_LOG(LogMapAdjacencyList, Error, TEXT("FindPath failed; no output node %lld found for edge (%s)"), Edge.OutID, *Edge.ToString());
 				continue;
 			}
 			
