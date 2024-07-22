@@ -3,6 +3,8 @@
 
 #include <functional>
 
+DECLARE_LOG_CATEGORY_CLASS(LogMapAdjacencyList, Log, All)
+
 bool FMapAdjacencyList::HasNode(const int QueryX, const int QueryY, const int QueryLayer) const
 {
 	const FNode::ID id = this->GetNodeId(QueryX, QueryY, QueryLayer);
@@ -132,11 +134,21 @@ TArray<FVector> FMapAdjacencyList::FindPath(const FIntVector2& From, const FIntV
 		}
 
 		const FVector& CurrNodeLocation = CurrNodePtr->Location;
-		const FNode& CurrNode = this->GetNode(CurrNodeLocation.X, CurrNodeLocation.Y, 0);
+		const uint32 CurrNodeLayer = FMath::RoundToInt(CurrNodeLocation.Z / 25.0);
+		const FNode& CurrNode = this->GetNode(CurrNodeLocation.X, CurrNodeLocation.Y, CurrNodeLayer);
 		const TArray<FEdge>& CurrOutwardEdges = CurrNode.OutEdges;
 
 		for (const auto& Edge : CurrOutwardEdges) {
 			if (Edge.Type != Direct && Edge.Type != Slope && Edge.Type != SlopeBottom && Edge.Type != SlopeTop) {
+				continue;
+			}
+
+			if (!Nodes.Contains(Edge.InID)) {
+				UE_LOG(LogMapAdjacencyList, Error, TEXT("FindPath failed; no input node %d found for edge (%s)"), Edge.InID, *Edge.ToString());
+				continue;
+			}
+			if (!Nodes.Contains(Edge.OutID)) {
+				UE_LOG(LogMapAdjacencyList, Error, TEXT("FindPath failed; no output node %d found for edge (%s)"), Edge.OutID, *Edge.ToString());
 				continue;
 			}
 			
@@ -227,7 +239,7 @@ TArray<FVector> FMapAdjacencyList::FindPath(const FIntVector2& From, const FIntV
 	return Path;
 }
 
-FMapAdjacencyList::FNode::ID FMapAdjacencyList::GetNodeId(int X, int Y, int Layer)
+FMapAdjacencyList::FNode::ID FMapAdjacencyList::GetNodeId(const int64 X, const int64 Y, const int64 Layer)
 {
 	return (
 		Layer * AssumedMaxRows * AssumedMaxLayers
@@ -241,7 +253,7 @@ FMapAdjacencyList::FNode::ID FMapAdjacencyList::GetNodeId(const FNode& Node)
 	return GetNodeId(Node.X, Node.Y, Node.Layer);
 }
 
-FMapAdjacencyList::FNode& FMapAdjacencyList::GetNode(int X, int Y, int Layer)
+FMapAdjacencyList::FNode& FMapAdjacencyList::GetNode(const int64 X, const int64 Y, const int64 Layer)
 {
 	const FNode::ID Id = this->GetNodeId(X, Y, Layer);
 	check(this->Nodes.Contains(Id));

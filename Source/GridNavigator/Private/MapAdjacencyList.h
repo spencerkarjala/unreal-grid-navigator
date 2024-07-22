@@ -3,7 +3,7 @@
 class FMapAdjacencyList
 {
 public:
-	enum EMapEdgeType
+	enum EMapEdgeType : uint8
 	{
 		None,
 		Direct,
@@ -18,11 +18,12 @@ public:
 	
 	struct FNode
 	{
-		typedef int ID;
+		typedef int64 ID;
 		
-		FNode(int NewX, int NewY, int NewLayer, float NewHeight) : X(NewX), Y(NewY), Layer(NewLayer), Height(NewHeight) {}
+		FNode(const int32 NewX, const int32 NewY, const int32 NewLayer, const float NewHeight)
+			: X(NewX), Y(NewY), Layer(NewLayer), Height(NewHeight) {}
 		
-		int X, Y, Layer;
+		int32 X, Y, Layer;
 		float Height;
 		TArray<FEdge> OutEdges;
 	};
@@ -34,6 +35,11 @@ public:
 		const FNode::ID InID;
 		const FNode::ID OutID;
 		EMapEdgeType Type;
+
+		FString ToString() const
+		{
+			return FString::Printf(TEXT("Edge at %p, Edge in: %llu, Edge out: %llu, Edge Type: %d"), this, InID, OutID, Type);
+		}
 	};
 	
 	TMap<FNode::ID, FNode> Nodes;
@@ -47,11 +53,11 @@ public:
 	TArray<FVector> FindPath(const FIntVector2& From, const FIntVector2& To);
 
 private:
-	static FNode::ID GetNodeId(int X, int Y, int Layer);
+	static FNode::ID GetNodeId(const int64 X, const int64 Y, const int64 Layer);
 	static FNode::ID GetNodeId(const FNode& Node);
-	FNode& GetNode(int X, int Y, int Layer);
+	FNode& GetNode(const int64 X, const int64 Y, const int64 Layer);
 
 	// TODO: upgrade to parameters
-	static constexpr int AssumedMaxLayers = 1;
+	static constexpr int AssumedMaxLayers = 16;
 	static constexpr int AssumedMaxRows = 64;
 };

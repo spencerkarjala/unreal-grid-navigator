@@ -184,8 +184,7 @@ void FMappingServer::PopulateMap(const UWorld& World, const FBox& BoundingBox)
 				continue;
 			}
 
-			// const int Layer = round(HitResult.Location.Z / 25.0);
-			constexpr int Layer = 0;
+			const int Layer = FMath::RoundToInt(HitResult.Location.Z / 25.0);
 			
 			Map.AddNode(i, j, Layer, HitResult.Location.Z);
 
@@ -312,10 +311,13 @@ void FMappingServer::PopulateMap(const UWorld& World, const FBox& BoundingBox)
 						else if (NeighborIsFlatSide && NeighborIsLowerSide) EdgeType = FMapAdjacencyList::EMapEdgeType::SlopeBottom;
 					}
 				}
+
+				const int FromLayer = FMath::RoundToInt(NodeHeight / 25.0);
+				const int ToLayer   = FMath::RoundToInt(NeighborHeight /  25.0);
 			
 				Map.CreateEdge(
-					i,             j,             Layer, NodeHeight,
-					i + NeighborI, j + NeighborJ, Layer, NeighborHeight,
+					i,             j,             FromLayer, NodeHeight,
+					i + NeighborI, j + NeighborJ, ToLayer,   NeighborHeight,
 					EdgeType
 				);
 			}
