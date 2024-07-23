@@ -17,7 +17,6 @@ public:
 	virtual void OnUnregister() override;
 
 	virtual FDebugRenderSceneProxy* CreateDebugSceneProxy() override;
-	virtual FDebugDrawDelegateHelper& GetDebugDrawDelegateHelper() override;
 
 	virtual FBoxSphereBounds CalcBounds(const FTransform& LocalToWorld) const override;
 

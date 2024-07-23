@@ -1,6 +1,9 @@
 #include "NavGridRenderingComponent.h"
 
+#include "GNRecastNavMesh.h"
 #include "MappingServer.h"
+#include "NavGridSceneProxy.h"
+#include "NavMesh/NavMeshRenderingComponent.h"
 
 DECLARE_LOG_CATEGORY_CLASS(LogNavGridRenderingComponent, Log, All);
 
@@ -41,7 +44,7 @@ void UNavGridRenderingComponent::OnRegister()
 		CheckRenderNavigationFlagTimer,
 		this,
 		&UNavGridRenderingComponent::CheckRenderNavigationFlagActive,
-		0.2,
+		1.0,
 		true,
 		0.0
 	);
@@ -54,20 +57,30 @@ void UNavGridRenderingComponent::OnUnregister()
 	bPrevShowNavigationFlagValue = false;
 }
 
+#pragma optimize("", off)
 FDebugRenderSceneProxy* UNavGridRenderingComponent::CreateDebugSceneProxy()
 {
 	const bool ShouldShowNavigation = CheckShowNavigationFlag();
 	if (!ShouldShowNavigation) {
 		return nullptr;
 	}
-	
-	return nullptr;
-}
 
-FDebugDrawDelegateHelper& UNavGridRenderingComponent::GetDebugDrawDelegateHelper()
-{
-	return Super::GetDebugDrawDelegateHelper();
+	const auto* NavGrid = Cast<AGNRecastNavMesh>(GetOwner());
+	if (!IsValid(NavGrid) || !NavGrid->IsDrawingEnabled() || !IsVisible()) {
+		return nullptr;
+	}
+
+	auto* NavGridSceneProxy = new FNavGridSceneProxy(this);
+	if (!NavGridSceneProxy) {
+		return nullptr;
+	}
+
+	FDebugRenderSceneProxy::FDebugBox NewBox(FBox(FVector(-100, -100, -100), FVector(100, 100, 100)), FColor(0, 255, 0 , 255));
+	NavGridSceneProxy->Boxes.Add(NewBox);
+	
+	return NavGridSceneProxy;
 }
+#pragma optimize("", on)
 
 FBoxSphereBounds UNavGridRenderingComponent::CalcBounds(const FTransform& LocalToWorld) const
 {
@@ -94,10 +107,9 @@ bool UNavGridRenderingComponent::CheckShowNavigationFlag() const
 
 void UNavGridRenderingComponent::CheckRenderNavigationFlagActive()
 {
-	bool bShouldShowNavigation = CheckShowNavigationFlag();
-	if (bShouldShowNavigation && !bPrevShowNavigationFlagValue) {
-		UE_LOG(LogNavGridRenderingComponent, Error, TEXT("made it here !!"));
-		// do something
+	const bool bShouldShowNavigation = CheckShowNavigationFlag();
+	if (bShouldShowNavigation != bPrevShowNavigationFlagValue) {
+		MarkRenderStateDirty();
 	}
 	bPrevShowNavigationFlagValue = bShouldShowNavigation;
 }
