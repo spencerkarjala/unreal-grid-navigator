@@ -9,7 +9,12 @@ class GRIDNAVIGATOR_API AGNRecastNavMesh : public ARecastNavMesh
 {
 	GENERATED_BODY()
 
+public:
 	AGNRecastNavMesh(const FObjectInitializer& ObjectInitializer);
 
+	virtual void OnNavigationBoundsChanged() override;
+	virtual UPrimitiveComponent* ConstructRenderingComponent() override;
+
+private:
 	static FPathFindingResult FindPath(const FNavAgentProperties& AgentProperties, const FPathFindingQuery& Query);
 };

@@ -2,17 +2,16 @@
 
 #include "CoreMinimal.h"
 #include "Debug/DebugDrawComponent.h"
-#include "GNNavMeshRenderingComponent.generated.h"
-
+#include "NavGridRenderingComponent.generated.h"
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class UGNNavMeshRenderingComponent : public UDebugDrawComponent
+class UNavGridRenderingComponent : public UDebugDrawComponent
 {
 	GENERATED_BODY()
 
 public:
 	// ReSharper disable once CppNonExplicitConvertingConstructor
-	UGNNavMeshRenderingComponent(const FObjectInitializer& ObjectInitializer);
+	UNavGridRenderingComponent(const FObjectInitializer& ObjectInitializer);
 
 	virtual void OnRegister() override;
 	virtual void OnUnregister() override;
@@ -24,4 +23,9 @@ public:
 
 private:
 	bool CheckShowNavigationFlag() const;
+	void CheckRenderNavigationFlagActive(); 
+
+	FTimerHandle CheckRenderNavigationFlagTimer;
+
+	bool bPrevShowNavigationFlagValue = false;
 };

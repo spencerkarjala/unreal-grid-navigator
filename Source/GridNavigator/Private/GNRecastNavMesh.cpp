@@ -6,6 +6,7 @@
 #include <functional>
 #include <unordered_map>
 
+#include "NavGridRenderingComponent.h"
 #include "MappingServer.h"
 #include "NavMesh/PImplRecastNavMesh.h"
 
@@ -13,7 +14,32 @@ DECLARE_LOG_CATEGORY_CLASS(LogRGNRecastNavMesh, Log, All);
 
 AGNRecastNavMesh::AGNRecastNavMesh(const FObjectInitializer& ObjectInitializer) : ARecastNavMesh(ObjectInitializer)
 {
-	this->FindPathImplementation = this->FindPath;
+	FindPathImplementation = this->FindPath;
+}
+
+void AGNRecastNavMesh::OnNavigationBoundsChanged()
+{
+	const auto* World = GetWorld();
+	if (!IsValid(World)) {
+		return;
+	}
+	
+	const auto& NavigableBounds = GetNavigableBounds();
+	for (const auto& Bound : NavigableBounds) {
+		const auto MinIndex = FMappingServer::RoundToGrid(Bound.Min);
+		const auto MaxIndex = FMappingServer::RoundToGrid(Bound.Max);
+
+		UE_LOG(LogRGNRecastNavMesh, Warning, TEXT("new bounds: (%0.2f, %0.2f, %0.2f)  (%0.2f, %0.2f, %0.2f)"), MinIndex.X, MinIndex.Y, MinIndex.Z, MaxIndex.X, MaxIndex.Y, MaxIndex.Z);
+
+		// quit after one bound for now;
+		// TODO: support multiple disjoint bounds
+		return;
+	}
+}
+
+UPrimitiveComponent* AGNRecastNavMesh::ConstructRenderingComponent()
+{
+	return NewObject<UNavGridRenderingComponent>(this, TEXT("NavGridRenderingComponent"), RF_Transient);
 }
 
 struct Point {

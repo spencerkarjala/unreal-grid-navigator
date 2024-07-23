@@ -38,7 +38,7 @@ public class GridNavigator : ModuleRules
 				"Slate",
 				"SlateCore",
 				"Projects",
-				"ProceduralMeshComponent",
+				"UnrealEd"
 			}
 			);
 		
