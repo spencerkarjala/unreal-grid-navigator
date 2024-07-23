@@ -11,6 +11,8 @@ UNavGridRenderingComponent::UNavGridRenderingComponent(const FObjectInitializer&
 	: Super(ObjectInitializer)
 {
 	bUseEditorCompositing = true;
+	SetVisibility(true);
+	SetHiddenInGame(false);
 }
 
 void UNavGridRenderingComponent::OnRegister()
@@ -77,15 +79,20 @@ FDebugRenderSceneProxy* UNavGridRenderingComponent::CreateDebugSceneProxy()
 
 	FDebugRenderSceneProxy::FDebugBox NewBox(FBox(FVector(-100, -100, -100), FVector(100, 100, 100)), FColor(0, 255, 0 , 255));
 	NavGridSceneProxy->Boxes.Add(NewBox);
+	this->SetVisibility(true);
+	// Cast<AGNRecastNavMesh>(this->GetOwner())
 	
 	return NavGridSceneProxy;
 }
 #pragma optimize("", on)
 
+#pragma optimize("", off)
 FBoxSphereBounds UNavGridRenderingComponent::CalcBounds(const FTransform& LocalToWorld) const
 {
-	return FMappingServer::GetInstance().GetBounds().TransformBy(LocalToWorld);
+	const auto CalculatedBounds = FMappingServer::GetInstance().GetBounds().TransformBy(LocalToWorld);
+	return CalculatedBounds;
 }
+#pragma optimize("", on)
 
 // ReSharper disable once CppMemberFunctionMayBeStatic
 bool UNavGridRenderingComponent::CheckShowNavigationFlag() const
