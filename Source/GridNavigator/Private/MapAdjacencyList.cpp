@@ -16,6 +16,15 @@ void FMapAdjacencyList::AddNode(int X, int Y, int Layer, float Height)
 	this->Nodes.Emplace(GetNodeId(X, Y, Layer), FNode(X, Y, Layer, Height));
 }
 
+TArray<FMapAdjacencyList::FNode> FMapAdjacencyList::GetNodeList()
+{
+	TArray<FNode> Output;
+	for (const auto& [ID, Node] : Nodes) {
+		Output.Add(Node);
+	}
+	return Output;
+}
+
 TArray<FMapAdjacencyList::FEdge> FMapAdjacencyList::GetEdgeList()
 {
 	TArray<FEdge> Output;

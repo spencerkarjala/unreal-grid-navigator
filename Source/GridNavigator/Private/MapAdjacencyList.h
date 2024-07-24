@@ -46,6 +46,7 @@ public:
 
 	bool HasNode(const int QueryX, const int QueryY, const int QueryLayer) const;
 	void AddNode(int X, int Y, int Layer, float Height);
+	TArray<FNode> GetNodeList();
 	TArray<FEdge> GetEdgeList();
 	void CreateEdge(int FromX, int FromY, int FromLayer, float FromHeight, int ToX, int ToY, int ToLayer, float ToHeight, EMapEdgeType EdgeType);
 	void Clear();

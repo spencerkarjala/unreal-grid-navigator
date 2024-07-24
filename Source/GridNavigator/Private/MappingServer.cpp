@@ -116,6 +116,11 @@ TPair<TArray<FVector>, TArray<FVector>> FMappingServer::FindPath(const FVector& 
 	return { NavigablePoints, FilteredPoints };
 }
 
+TArray<FMapAdjacencyList::FNode> FMappingServer::GetMapNodeList()
+{
+	return Map.GetNodeList();
+}
+
 TArray<FMapAdjacencyList::FEdge> FMappingServer::GetMapEdgeList()
 {
 	return Map.GetEdgeList();

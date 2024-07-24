@@ -20,6 +20,7 @@ public:
 	TArray<FVector> FindPath(const FVector& From, const FVector& To);
 	TPair<TArray<FVector>, TArray<FVector>> FindPath(const FVector& From, const FVector& To, const float DistanceBudget);
 
+	TArray<FMapAdjacencyList::FNode> GetMapNodeList();
 	TArray<FMapAdjacencyList::FEdge> GetMapEdgeList();
 	
 	static FVector RoundToGrid(const FVector& Value);
