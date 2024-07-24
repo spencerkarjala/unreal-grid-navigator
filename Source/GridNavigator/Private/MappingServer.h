@@ -19,6 +19,8 @@ public:
 	void RemapFromWorld(const UWorld& World);
 	TArray<FVector> FindPath(const FVector& From, const FVector& To);
 	TPair<TArray<FVector>, TArray<FVector>> FindPath(const FVector& From, const FVector& To, const float DistanceBudget);
+
+	TArray<FMapAdjacencyList::FEdge> GetMapEdgeList();
 	
 	static FVector RoundToGrid(const FVector& Value);
 	static FVector TruncToGrid(const FVector& Value);
