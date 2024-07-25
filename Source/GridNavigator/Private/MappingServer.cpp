@@ -116,6 +116,36 @@ TPair<TArray<FVector>, TArray<FVector>> FMappingServer::FindPath(const FVector& 
 	return { NavigablePoints, FilteredPoints };
 }
 
+#pragma optimize("", off)
+FBoxSphereBounds FMappingServer::GetBounds() const
+{
+	FVector MinBound(TNumericLimits<float>::Max());
+	FVector MaxBound(TNumericLimits<float>::Min());
+
+	// iterate over all nodes to determine max and min bounding points
+	TArray<FMapAdjacencyList::FNode> Nodes;
+	Map.Nodes.GenerateValueArray(Nodes);
+	for (const auto& Node : Nodes) {
+		if (Node.X < MinBound.X) MinBound.X = Node.X;
+		if (Node.X > MaxBound.X) MaxBound.X = Node.X;
+		if (Node.Y < MinBound.Y) MinBound.Y = Node.Y;
+		if (Node.Y > MaxBound.Y) MaxBound.Y = Node.Y;
+		if (Node.Layer < MinBound.Z) MinBound.Z = Node.Layer;
+		if (Node.Layer > MaxBound.Z) MaxBound.Z = Node.Layer;
+	}
+
+	const FVector BoundsOrigin = (MinBound + MaxBound) / 2.f;
+	const FVector BoundsExtent = (MaxBound - BoundsOrigin);
+
+	const FVector MapSizeVec(100.0, 100.0, 25.0);
+	const FVector BoundsOriginScaled = BoundsOrigin * MapSizeVec;
+	const FVector BoundsExtentScaled = BoundsExtent * MapSizeVec;
+	const float SphereRadius = BoundsExtentScaled.Size();
+
+	return FBoxSphereBounds(BoundsOriginScaled, BoundsExtentScaled, SphereRadius);
+}
+#pragma optimize("", on)
+
 TArray<FMapAdjacencyList::FNode> FMappingServer::GetMapNodeList()
 {
 	return Map.GetNodeList();

@@ -19,6 +19,7 @@ public:
 	void RemapFromWorld(const UWorld& World);
 	TArray<FVector> FindPath(const FVector& From, const FVector& To);
 	TPair<TArray<FVector>, TArray<FVector>> FindPath(const FVector& From, const FVector& To, const float DistanceBudget);
+	FBoxSphereBounds GetBounds() const;
 
 	TArray<FMapAdjacencyList::FNode> GetMapNodeList();
 	TArray<FMapAdjacencyList::FEdge> GetMapEdgeList();
