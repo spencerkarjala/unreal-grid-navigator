@@ -144,6 +144,15 @@ FVector FMappingServer::TruncToGrid(const FVector& Value)
 	);
 }
 
+void FMappingServer::Serialize(FArchive& Ar)
+{
+	for (auto& [ID, Node] : Map.Nodes) {
+		long long IDl = ID;
+		Ar << IDl;
+		Ar << Node;
+	}
+}
+
 FString FMappingServer::Stringify()
 {
 	return this->Map.Stringify();

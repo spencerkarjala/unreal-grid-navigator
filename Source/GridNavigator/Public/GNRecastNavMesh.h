@@ -15,6 +15,8 @@ public:
 	virtual void OnNavigationBoundsChanged() override;
 	virtual UPrimitiveComponent* ConstructRenderingComponent() override;
 
+	virtual void Serialize(FArchive& Ar) override;
+
 private:
 	static FPathFindingResult FindPath(const FNavAgentProperties& AgentProperties, const FPathFindingQuery& Query);
 };

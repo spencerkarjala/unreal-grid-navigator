@@ -25,6 +25,8 @@ public:
 	
 	static FVector RoundToGrid(const FVector& Value);
 	static FVector TruncToGrid(const FVector& Value);
+
+	void Serialize(FArchive& Ar);
 	
 	FString Stringify();
 	void DrawDebug(const UWorld& World);

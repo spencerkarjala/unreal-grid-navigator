@@ -42,6 +42,12 @@ UPrimitiveComponent* AGNRecastNavMesh::ConstructRenderingComponent()
 	return NewObject<UNavGridRenderingComponent>(this, TEXT("NavGridRenderingComponent"), RF_Transient);
 }
 
+void AGNRecastNavMesh::Serialize(FArchive& Ar)
+{
+	Super::Serialize(Ar);
+	FMappingServer::GetInstance().Serialize(Ar);
+}
+
 struct Point {
 	int x, y;
 
