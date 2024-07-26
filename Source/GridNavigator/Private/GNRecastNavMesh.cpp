@@ -19,6 +19,27 @@ AGNRecastNavMesh::AGNRecastNavMesh(const FObjectInitializer& ObjectInitializer) 
 
 void AGNRecastNavMesh::OnNavigationBoundsChanged()
 {
+	HandleRebuildNavigation();
+}
+
+UPrimitiveComponent* AGNRecastNavMesh::ConstructRenderingComponent()
+{
+	return NewObject<UNavGridRenderingComponent>(this, TEXT("NavGridRenderingComponent"), RF_Transient);
+}
+
+void AGNRecastNavMesh::Serialize(FArchive& Ar)
+{
+	Super::Serialize(Ar);
+	FMappingServer::GetInstance().Serialize(Ar);
+}
+
+void AGNRecastNavMesh::RebuildNavigation() const
+{
+	HandleRebuildNavigation();
+}
+
+void AGNRecastNavMesh::HandleRebuildNavigation() const
+{
 	const auto* World = GetWorld();
 	if (!IsValid(World)) {
 		return;
@@ -31,21 +52,12 @@ void AGNRecastNavMesh::OnNavigationBoundsChanged()
 
 		UE_LOG(LogRGNRecastNavMesh, Warning, TEXT("new bounds: (%0.2f, %0.2f, %0.2f)  (%0.2f, %0.2f, %0.2f)"), MinIndex.X, MinIndex.Y, MinIndex.Z, MaxIndex.X, MaxIndex.Y, MaxIndex.Z);
 
+		FMappingServer::GetInstance().RemapFromWorld(*World);
+
 		// quit after one bound for now;
 		// TODO: support multiple disjoint bounds
 		return;
 	}
-}
-
-UPrimitiveComponent* AGNRecastNavMesh::ConstructRenderingComponent()
-{
-	return NewObject<UNavGridRenderingComponent>(this, TEXT("NavGridRenderingComponent"), RF_Transient);
-}
-
-void AGNRecastNavMesh::Serialize(FArchive& Ar)
-{
-	Super::Serialize(Ar);
-	FMappingServer::GetInstance().Serialize(Ar);
 }
 
 struct Point {

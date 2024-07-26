@@ -8,9 +8,9 @@ AGridNavigatorProbe::AGridNavigatorProbe()
 	PrimaryActorTick.bCanEverTick = false;
 }
 
-void AGridNavigatorProbe::BeginPlay()
+void AGridNavigatorProbe::PostLoad()
 {
-	Super::BeginPlay();
+	Super::PostLoad();
 
 	const auto* World = GetWorld();
 	if (!IsValid(World)) {

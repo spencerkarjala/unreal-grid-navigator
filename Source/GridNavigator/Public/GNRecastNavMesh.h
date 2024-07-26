@@ -17,6 +17,11 @@ public:
 
 	virtual void Serialize(FArchive& Ar) override;
 
+	UFUNCTION(CallInEditor, Category="Navigation", DisplayName="Rebuild Navigation")
+	void RebuildNavigation() const;
+
 private:
 	static FPathFindingResult FindPath(const FNavAgentProperties& AgentProperties, const FPathFindingQuery& Query);
+
+	void HandleRebuildNavigation() const;
 };

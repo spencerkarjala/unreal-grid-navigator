@@ -11,8 +11,8 @@ UNavGridRenderingComponent::UNavGridRenderingComponent(const FObjectInitializer&
 	: Super(ObjectInitializer)
 {
 	bUseEditorCompositing = true;
-	SetVisibility(true);
 	SetHiddenInGame(false);
+	SetVisibility(true);
 }
 
 void UNavGridRenderingComponent::OnRegister()
@@ -46,7 +46,7 @@ void UNavGridRenderingComponent::OnRegister()
 		CheckRenderNavigationFlagTimer,
 		this,
 		&UNavGridRenderingComponent::CheckRenderNavigationFlagActive,
-		1.0,
+		0.1,
 		true,
 		0.0
 	);
@@ -76,11 +76,18 @@ FDebugRenderSceneProxy* UNavGridRenderingComponent::CreateDebugSceneProxy()
 	if (!NavGridSceneProxy) {
 		return nullptr;
 	}
+	
+	const auto NodeList = FMappingServer::GetInstance().GetMapNodeList();
+	
+	for (const auto& Node : NodeList) {
+		const FVector BoxPos(Node.X * 100.00, Node.Y * 100.0, Node.Layer * 25.0);
+		const FVector BoxDiagonal(50.0, 50.0, 5.0);
 
-	FDebugRenderSceneProxy::FDebugBox NewBox(FBox(FVector(-100, -100, -100), FVector(100, 100, 100)), FColor(0, 255, 0 , 255));
-	NavGridSceneProxy->Boxes.Add(NewBox);
+		const FBox BoxDims(BoxPos - BoxDiagonal, BoxPos + BoxDiagonal);
+		NavGridSceneProxy->Boxes.Emplace(BoxDims, FColor(0, 255, 0));
+	}
+
 	this->SetVisibility(true);
-	// Cast<AGNRecastNavMesh>(this->GetOwner())
 	
 	return NavGridSceneProxy;
 }
@@ -112,6 +119,7 @@ bool UNavGridRenderingComponent::CheckShowNavigationFlag() const
 	return Flags->GetSingleFlag(FEngineShowFlags::EShowFlag::SF_Navigation);
 }
 
+#pragma optimize("", off)
 void UNavGridRenderingComponent::CheckRenderNavigationFlagActive()
 {
 	const bool bShouldShowNavigation = CheckShowNavigationFlag();
@@ -120,3 +128,4 @@ void UNavGridRenderingComponent::CheckRenderNavigationFlagActive()
 	}
 	bPrevShowNavigationFlagValue = bShouldShowNavigation;
 }
+#pragma optimize("", on)

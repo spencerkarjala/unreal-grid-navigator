@@ -13,5 +13,5 @@ public:
 	AGridNavigatorProbe();
 
 protected:
-	virtual void BeginPlay() override;
+	virtual void PostLoad() override;
 };
