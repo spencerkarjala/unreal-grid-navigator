@@ -50,6 +50,12 @@ void FMappingServer::RemapFromWorld(const UWorld& World)
 	PopulateMap(World, FBox(LowerBound, UpperBound));
 }
 
+#pragma optimize("", off)
+void FMappingServer::RemapFromBound(const UWorld&, const FBox& Bound)
+{
+	int a = 1;
+}
+#pragma optimize("", on)
 
 TArray<FVector> FMappingServer::FindPath(const FVector& From, const FVector& To)
 {
@@ -176,11 +182,7 @@ FVector FMappingServer::TruncToGrid(const FVector& Value)
 
 void FMappingServer::Serialize(FArchive& Ar)
 {
-	for (auto& [ID, Node] : Map.Nodes) {
-		long long IDl = ID;
-		Ar << IDl;
-		Ar << Node;
-	}
+	Ar << Map.Nodes;
 }
 
 FString FMappingServer::Stringify()
