@@ -59,7 +59,6 @@ void UNavGridRenderingComponent::OnUnregister()
 	bPrevShowNavigationFlagValue = false;
 }
 
-#pragma optimize("", off)
 FDebugRenderSceneProxy* UNavGridRenderingComponent::CreateDebugSceneProxy()
 {
 	const bool ShouldShowNavigation = CheckShowNavigationFlag();
@@ -81,7 +80,7 @@ FDebugRenderSceneProxy* UNavGridRenderingComponent::CreateDebugSceneProxy()
 	
 	for (const auto& Node : NodeList) {
 		const FVector BoxPos(Node.X * 100.00, Node.Y * 100.0, Node.Layer * 25.0);
-		const FVector BoxDiagonal(50.0, 50.0, 5.0);
+		const FVector BoxDiagonal(2.5, 2.5, 2.5);
 
 		const FBox BoxDims(BoxPos - BoxDiagonal, BoxPos + BoxDiagonal);
 		NavGridSceneProxy->Boxes.Emplace(BoxDims, FColor(0, 255, 0));
@@ -91,15 +90,12 @@ FDebugRenderSceneProxy* UNavGridRenderingComponent::CreateDebugSceneProxy()
 	
 	return NavGridSceneProxy;
 }
-#pragma optimize("", on)
 
-#pragma optimize("", off)
 FBoxSphereBounds UNavGridRenderingComponent::CalcBounds(const FTransform& LocalToWorld) const
 {
 	const auto CalculatedBounds = FMappingServer::GetInstance().GetBounds().TransformBy(LocalToWorld);
 	return CalculatedBounds;
 }
-#pragma optimize("", on)
 
 // ReSharper disable once CppMemberFunctionMayBeStatic
 bool UNavGridRenderingComponent::CheckShowNavigationFlag() const
@@ -119,7 +115,6 @@ bool UNavGridRenderingComponent::CheckShowNavigationFlag() const
 	return Flags->GetSingleFlag(FEngineShowFlags::EShowFlag::SF_Navigation);
 }
 
-#pragma optimize("", off)
 void UNavGridRenderingComponent::CheckRenderNavigationFlagActive()
 {
 	const bool bShouldShowNavigation = CheckShowNavigationFlag();
@@ -128,4 +123,3 @@ void UNavGridRenderingComponent::CheckRenderNavigationFlagActive()
 	}
 	bPrevShowNavigationFlagValue = bShouldShowNavigation;
 }
-#pragma optimize("", on)

@@ -50,12 +50,10 @@ void FMappingServer::RemapFromWorld(const UWorld& World)
 	PopulateMap(World, FBox(LowerBound, UpperBound));
 }
 
-#pragma optimize("", off)
 void FMappingServer::RemapFromBound(const UWorld&, const FBox& Bound)
 {
 	int a = 1;
 }
-#pragma optimize("", on)
 
 TArray<FVector> FMappingServer::FindPath(const FVector& From, const FVector& To)
 {
@@ -122,7 +120,6 @@ TPair<TArray<FVector>, TArray<FVector>> FMappingServer::FindPath(const FVector& 
 	return { NavigablePoints, FilteredPoints };
 }
 
-#pragma optimize("", off)
 FBoxSphereBounds FMappingServer::GetBounds() const
 {
 	FVector MinBound(TNumericLimits<float>::Max());
@@ -150,7 +147,6 @@ FBoxSphereBounds FMappingServer::GetBounds() const
 
 	return FBoxSphereBounds(BoundsOriginScaled, BoundsExtentScaled, SphereRadius);
 }
-#pragma optimize("", on)
 
 TArray<FMapAdjacencyList::FNode> FMappingServer::GetMapNodeList()
 {
