@@ -43,7 +43,9 @@ void FMapAdjacencyList::CreateEdge(int FromX, int FromY, int FromLayer, float Fr
 	FNode::ID FromId = GetNodeId(FromX, FromY, FromLayer);
 	FNode::ID ToId   = GetNodeId(ToX, ToY, ToLayer);
 
-	Nodes[FromId].OutEdges.Emplace(FromId, ToId, EdgeType);
+	const FVector Direction(ToX - FromX, ToY - FromY, ToLayer - FromLayer);
+
+	Nodes[FromId].OutEdges.Emplace(FromId, ToId, EdgeType, Direction);
 }
 
 void FMapAdjacencyList::Clear()
@@ -59,13 +61,14 @@ FString FMapAdjacencyList::Stringify()
 
 	for (const auto& [Id, Node] : this->Nodes) {
 		Output.Appendf(TEXT("\tID %d = (%d, %d) on layer %d and with outward edges:\r\n"), Id, Node.X, Node.Y, Node.Layer);
-		for (const auto& [InId, OutId, Type] : Node.OutEdges) {
+		for (const auto& [InId, OutId, Type, Direction] : Node.OutEdges) {
 			const FNode& In = Nodes[InId];
 			const FNode& Out = Nodes[OutId];
 			Output.Appendf(
-				TEXT("\t\tID %d: (%d, %d) L%d H%0.2f -> ID %d: (%d, %d)  L %d  H %0.2f\r\n"),
+				TEXT("\t\tID %d: (%d, %d) L%d H%0.2f -> ID %d: (%d, %d)  L %d  H %0.2f | Dir: (%0.2f, %0.2f, %0.2f)\r\n"),
 				InId,  In.X,  In.Y,  In.Layer,  In.Height,
-				OutId, Out.X, Out.Y, Out.Layer, Out.Height
+				OutId, Out.X, Out.Y, Out.Layer, Out.Height,
+				Direction.X, Direction.Y, Direction.Z
 			);
 		}
 	}
@@ -76,7 +79,7 @@ FString FMapAdjacencyList::Stringify()
 void FMapAdjacencyList::DrawDebug(const UWorld& World)
 {
 	for (const auto& [Id, Node] : Nodes) {
-		for (const auto& [ToId, FromId, EdgeType] : Node.OutEdges) {
+		for (const auto& [ToId, FromId, EdgeType, Direction] : Node.OutEdges) {
 			const auto& FromNode = Node;
 			const auto& ToNode = Nodes[FromId];
 

@@ -86,15 +86,30 @@ FDebugRenderSceneProxy* UNavGridRenderingComponent::CreateDebugSceneProxy()
 		const FBox BoxDims(BoxPos - BoxDiagonal, BoxPos + BoxDiagonal);
 		FColor BoxColor(0, 255, 0);
 		
-		for (const auto& Edge : Node.OutEdges) {
-			const auto& CurrentNode = MapServer.GetNode(Edge.InID);
-			const auto& NeighborNode = MapServer.GetNode(Edge.OutID);
+		for (const auto& [InNodeID, OutNodeID, EdgeType, EdgeDirection] : Node.OutEdges) {
+			const auto& InNodeResult = MapServer.GetNode(InNodeID);   // should never fail
+			const auto& OutNodeResult = MapServer.GetNode(OutNodeID); // can fail if something else has broken
 
-			check(CurrentNode.has_value() && CurrentNode.value().get() == Node)
+			check(InNodeResult.has_value() && InNodeResult->get() == Node);
 
-			if (!NeighborNode.has_value()) {
+			FColor LineColor(255, 255, 255);
+			if (!OutNodeResult.has_value()) {
+				LineColor = FColor(255, 0, 0);
 				BoxColor = FColor(255, 0, 0);
 			}
+
+			const FIntVector3 InNodeIndex(Node.X, Node.Y, Node.Layer);
+			const FVector InNodeWorldPos = FMappingServer::GridIndexToWorld(InNodeIndex);
+
+			const FIntVector3 OutNodeIndex(Node.X + EdgeDirection.X, Node.Y + EdgeDirection.Y, Node.Layer + EdgeDirection.Z);
+			const FVector OutNodeWorldPos = FMappingServer::GridIndexToWorld(OutNodeIndex);
+
+			// slight offset so arrows don't all start and end in the same place; increases readability
+			const FVector MidPointWorldPos = (InNodeWorldPos + OutNodeWorldPos) / 2.0;
+			const FVector InNodeWorldPosWithOffset = MidPointWorldPos + (InNodeWorldPos - MidPointWorldPos) * 0.7;
+			const FVector OutNodeWorldPosWithOffset = MidPointWorldPos + (OutNodeWorldPos - MidPointWorldPos) * 0.7;
+
+			NavGridSceneProxy->ArrowLines.Emplace(InNodeWorldPosWithOffset, OutNodeWorldPosWithOffset, LineColor);
 		}
 		
 		NavGridSceneProxy->Boxes.Emplace(BoxDims, BoxColor);

@@ -4,11 +4,10 @@
 
 #include "GridNavigatorConfig.h"
 #include "Engine/World.h"
-#include "Kismet/KismetSystemLibrary.h"
 
 bool FloorTrace(const float I, const float J, const float MaxZ, const float MinZ, FHitResult& HitResult, const UWorld& World)
 {
-	const FVector2f GridIndex(I, J);
+	const FIntVector2 GridIndex(I, J);
 	const FVector2f WorldCoordXY = FMappingServer::GridIndexToWorld(GridIndex);
 	const FVector WorldLocationTraceStart(WorldCoordXY.X, WorldCoordXY.Y, MaxZ * 25.0);
 	const FVector WorldLocationTraceEnd  (WorldCoordXY.X, WorldCoordXY.Y, MinZ * 25.0);
@@ -55,7 +54,7 @@ TArray<FVector> FMappingServer::FindPath(const FVector& From, const FVector& To)
 	// map (I,J,Z) triplets to (X,Y,Z) triplets
 	TArray<FVector> WorldPoints;
 	for (const FVector& Point : IndexPoints) {
-		FVector2f PointIndex(Point.X, Point.Y);
+		FIntVector2 PointIndex(Point.X, Point.Y);
 		FVector2f PointWorldXY = GridIndexToWorld(PointIndex);
 		FVector PointWorld(PointWorldXY.X, PointWorldXY.Y, Point.Z);
 		WorldPoints.Add(PointWorld);
@@ -189,14 +188,35 @@ void FMappingServer::DrawDebug(const UWorld& World)
 FIntVector2 FMappingServer::WorldToGridIndex(const FVector2f& WorldCoord)
 {
 	return FIntVector2(
-		FMath::RoundToInt(WorldCoord.X / static_cast<float>(ASSUMED_GRID_SPACING)),
-		FMath::RoundToInt(WorldCoord.Y / static_cast<float>(ASSUMED_GRID_SPACING))
+		FMath::RoundToInt(WorldCoord.X / static_cast<float>(GridNavigatorConfig::GridSizeX)),
+		FMath::RoundToInt(WorldCoord.Y / static_cast<float>(GridNavigatorConfig::GridSizeY))
 	);
 }
 
-FVector2f FMappingServer::GridIndexToWorld(const FVector2f& IndexCoord)
+FIntVector3 FMappingServer::WorldToGridIndex(const FVector& WorldCoord)
 {
-	return IndexCoord * ASSUMED_GRID_SPACING;
+	return FIntVector3(
+		FMath::RoundToInt(WorldCoord.X / static_cast<float>(GridNavigatorConfig::GridSizeX)),
+		FMath::RoundToInt(WorldCoord.Y / static_cast<float>(GridNavigatorConfig::GridSizeY)),
+		FMath::RoundToInt(WorldCoord.Z / static_cast<float>(GridNavigatorConfig::GridSizeLayer))
+	);
+}
+
+FVector2f FMappingServer::GridIndexToWorld(const FIntVector2& IndexCoord)
+{
+	return FVector2f(
+		static_cast<float>(IndexCoord.X) * static_cast<float>(GridNavigatorConfig::GridSizeX),
+		static_cast<float>(IndexCoord.Y) * static_cast<float>(GridNavigatorConfig::GridSizeY)
+	);
+}
+
+FVector FMappingServer::GridIndexToWorld(const FIntVector3& IndexCoord)
+{
+	return FVector(
+		static_cast<float>(IndexCoord.X) * static_cast<float>(GridNavigatorConfig::GridSizeX),
+		static_cast<float>(IndexCoord.Y) * static_cast<float>(GridNavigatorConfig::GridSizeY),
+		static_cast<float>(IndexCoord.Z) * static_cast<float>(GridNavigatorConfig::GridSizeLayer)
+	);
 }
 
 FVector2f FMappingServer::SubGridIndexToWorld(const FVector2f& IndexCoord, FIntVector2 Direction, const float Alpha)

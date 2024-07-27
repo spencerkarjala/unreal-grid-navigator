@@ -45,7 +45,9 @@ public:
 	};
 
 	static FIntVector2 WorldToGridIndex(const FVector2f& WorldCoord);
-	static FVector2f GridIndexToWorld(const FVector2f& IndexCoord);
+	static FIntVector3 WorldToGridIndex(const FVector& WorldCoord);
+	static FVector2f GridIndexToWorld(const FIntVector2& IndexCoord);
+	static FVector GridIndexToWorld(const FIntVector3& IndexCoord);
 	static FVector2f SubGridIndexToWorld(const FVector2f& IndexCoord, FIntVector2 Direction, const float Alpha);
 
 private:

@@ -44,17 +44,27 @@ public:
 	struct FEdge
 	{
 		FEdge()
-			: InID(0), OutID(0), Type(None) {}
-		FEdge(const FNode::ID NewInID, const FNode::ID NewOutID, const EMapEdgeType NewType)
-			: InID(NewInID), OutID(NewOutID), Type(NewType) {}
+			: InID(0), OutID(0), Type(None), Direction(0, 0, 0) {}
+		FEdge(const FNode::ID NewInID, const FNode::ID NewOutID, const EMapEdgeType NewType, const FVector& NewDirection)
+			: InID(NewInID), OutID(NewOutID), Type(NewType), Direction(NewDirection) {}
 		
 		FNode::ID InID;
 		FNode::ID OutID;
 		EMapEdgeType Type;
+		FVector Direction;
 
 		FString ToString() const
 		{
-			return FString::Printf(TEXT("Edge at %p, Edge in: %llu, Edge out: %llu, Edge Type: %d"), this, InID, OutID, Type);
+			return FString::Printf(
+				TEXT("Edge at %p, Edge in: %llu, Edge out: %llu, Edge Type: %d, Edge Direction: (%0.2f, %0.2f, %0.2f)"),
+				this,
+				InID,
+				OutID,
+				Type,
+				Direction.X,
+				Direction.Y,
+				Direction.Z
+			);
 		}
 
 		friend FArchive& operator<<(FArchive& Ar, FEdge& Rhs)

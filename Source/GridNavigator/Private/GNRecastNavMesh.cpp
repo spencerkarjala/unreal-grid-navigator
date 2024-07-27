@@ -4,7 +4,6 @@
 #include "NavigationSystem.h"
 
 #include <functional>
-#include <unordered_map>
 
 #include "NavGridRenderingComponent.h"
 #include "MappingServer.h"
