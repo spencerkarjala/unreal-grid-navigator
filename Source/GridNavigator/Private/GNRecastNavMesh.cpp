@@ -24,7 +24,11 @@ void AGNRecastNavMesh::OnNavigationBoundsChanged()
 
 UPrimitiveComponent* AGNRecastNavMesh::ConstructRenderingComponent()
 {
-	return NewObject<UNavGridRenderingComponent>(this, TEXT("NavGridRenderingComponent"), RF_Transient);
+	DebugRenderingComponent = NewObject<UNavGridRenderingComponent>(this, TEXT("NavGridRenderingComponent"), RF_Transient);
+	if (!DebugRenderingComponent) {
+		return nullptr;
+	}
+	return DebugRenderingComponent.Get();
 }
 
 void AGNRecastNavMesh::Serialize(FArchive& Ar)
@@ -52,11 +56,12 @@ void AGNRecastNavMesh::HandleRebuildNavigation() const
 
 		UE_LOG(LogRGNRecastNavMesh, Warning, TEXT("new bounds: (%0.2f, %0.2f, %0.2f)  (%0.2f, %0.2f, %0.2f)"), MinIndex.X, MinIndex.Y, MinIndex.Z, MaxIndex.X, MaxIndex.Y, MaxIndex.Z);
 
-		FMappingServer::GetInstance().RemapFromWorld(*World);
+		FMappingServer::GetInstance().RemapFromBound(*World, FBox(MinIndex, MaxIndex));
 
-		// quit after one bound for now;
-		// TODO: support multiple disjoint bounds
-		return;
+		break;
+	}
+	if (DebugRenderingComponent) {
+		DebugRenderingComponent->MarkRenderStateDirty();
 	}
 }
 
