@@ -17,7 +17,7 @@ public:
 	}
 
 	void RemapFromWorld(const UWorld& World);
-	void RemapFromBound(const UWorld&, const FBox& Bound);
+	void RemapFromBound(const UWorld& World, const FBox& Bound);
 	TArray<FVector> FindPath(const FVector& From, const FVector& To);
 	TPair<TArray<FVector>, TArray<FVector>> FindPath(const FVector& From, const FVector& To, const float DistanceBudget);
 	FBoxSphereBounds GetBounds() const;

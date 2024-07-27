@@ -4,28 +4,24 @@
 
 #include "Engine/World.h"
 
-bool FloorTrace(const float I, const float J, FHitResult& HitResult, const UWorld& World)
+bool FloorTrace(const float I, const float J, const float MaxZ, const float MinZ, FHitResult& HitResult, const UWorld& World)
 {
-	constexpr float TraceHeight = 1000.0;
-	
 	const FVector2f GridIndex(I, J);
 	const FVector2f WorldCoordXY = FMappingServer::GridIndexToWorld(GridIndex);
-	const FVector WorldLocationTraceStart(WorldCoordXY.X, WorldCoordXY.Y, TraceHeight / 2.0);
-	const FVector WorldLocationTraceEnd  (WorldCoordXY.X, WorldCoordXY.Y, WorldLocationTraceStart.Z - TraceHeight);
+	const FVector WorldLocationTraceStart(WorldCoordXY.X, WorldCoordXY.Y, MaxZ * 25.0);
+	const FVector WorldLocationTraceEnd  (WorldCoordXY.X, WorldCoordXY.Y, MinZ * 25.0);
 	
 	const FCollisionQueryParams TraceParams(FName(TEXT("FMappingServerTraceParams")));
 	
 	return World.LineTraceSingleByObjectType(HitResult, WorldLocationTraceStart, WorldLocationTraceEnd, ECC_WorldStatic);
 }
 
-bool SubGridFloorTrace(const int I, const int J, const FIntVector2 Direction, const float Alpha, FHitResult& HitResult, const UWorld& World)
+bool SubGridFloorTrace(const int I, const int J, const float MaxZ, const float MinZ, const FIntVector2 Direction, const float Alpha, FHitResult& HitResult, const UWorld& World)
 {
-	constexpr float TraceHeight = 1000.0;
-
 	const FVector2f GridIndex(I, J);
 	const FVector2f WorldCoordXY = FMappingServer::SubGridIndexToWorld(GridIndex, Direction, Alpha);
-	const FVector WorldLocationTraceStart(WorldCoordXY.X, WorldCoordXY.Y, TraceHeight / 2.0);
-	const FVector WorldLocationTraceEnd  (WorldCoordXY.X, WorldCoordXY.Y, WorldLocationTraceStart.Z - TraceHeight);
+	const FVector WorldLocationTraceStart(WorldCoordXY.X, WorldCoordXY.Y, MaxZ * 25.0);
+	const FVector WorldLocationTraceEnd  (WorldCoordXY.X, WorldCoordXY.Y, MinZ * 25.0);
 	
 	const FCollisionQueryParams TraceParams(FName(TEXT("FMappingServerTraceParams")));
 	
@@ -50,9 +46,11 @@ void FMappingServer::RemapFromWorld(const UWorld& World)
 	PopulateMap(World, FBox(LowerBound, UpperBound));
 }
 
-void FMappingServer::RemapFromBound(const UWorld&, const FBox& Bound)
+void FMappingServer::RemapFromBound(const UWorld& World, const FBox& Bound)
 {
-	int a = 1;
+	Map.Clear();
+
+	PopulateMap(World, Bound);
 }
 
 TArray<FVector> FMappingServer::FindPath(const FVector& From, const FVector& To)
@@ -219,13 +217,18 @@ FVector2f FMappingServer::SubGridIndexToWorld(const FVector2f& IndexCoord, FIntV
 void FMappingServer::PopulateMap(const UWorld& World, const FBox& BoundingBox)
 {
 	const TArray<TPair<int, int>> Neighbors = {{1, 0}, {1, 1},{0, 1},{-1, 1},{-1, 0},{-1, -1},{0, -1},{1, -1} };
-	const auto& MinP = BoundingBox.Min;
-	const auto& MaxP = BoundingBox.Max;
 
-	for (int i = MinP.X; i <= MaxP.X; ++i) {
-		for (int j = MinP.Y; j <= MaxP.Y; ++j) {
+	const int MinX = FMath::RoundToInt(BoundingBox.Min.X / 100.0);
+	const int MinY = FMath::RoundToInt(BoundingBox.Min.Y / 100.0);
+	const int MinZ = FMath::RoundToInt(BoundingBox.Min.Z / 25.0);
+	const int MaxX = FMath::RoundToInt(BoundingBox.Max.X / 100.0);
+	const int MaxY = FMath::RoundToInt(BoundingBox.Max.Y / 100.0);
+	const int MaxZ = FMath::RoundToInt(BoundingBox.Max.Z / 25.0);
+
+	for (int i = MinX; i <= MaxX; ++i) {
+		for (int j = MinY; j <= MaxY; ++j) {
 			FHitResult HitResult(ForceInit);
-			const bool NodeIJExists = FloorTrace(i, j, HitResult, World);
+			const bool NodeIJExists = FloorTrace(i, j, MaxZ, MinZ, HitResult, World);
 			
 			if (!NodeIJExists) {
 				continue;
@@ -237,7 +240,7 @@ void FMappingServer::PopulateMap(const UWorld& World, const FBox& BoundingBox)
 
 			for (const auto& [NeighborI, NeighborJ] : Neighbors) {
 				FHitResult NeighborHitResult(ForceInit);
-				const bool NeighborNodeExists = FloorTrace(i + NeighborI, j + NeighborJ, NeighborHitResult, World);
+				const bool NeighborNodeExists = FloorTrace(i + NeighborI, j + NeighborJ, MaxZ, MinZ, NeighborHitResult, World);
 			
 				if (!NeighborNodeExists) {
 					continue;
@@ -301,10 +304,10 @@ void FMappingServer::PopulateMap(const UWorld& World, const FBox& BoundingBox)
 					const FIntVector2 NeighborDir(NeighborI, NeighborJ);
 					
 					FHitResult NodeSideSubGridHitResult;
-					bool NodeSideSubGridFloorExists = SubGridFloorTrace(i, j, NeighborDir, 0.2, NodeSideSubGridHitResult, World);
+					bool NodeSideSubGridFloorExists = SubGridFloorTrace(i, j, MaxZ, MinZ, NeighborDir, 0.2, NodeSideSubGridHitResult, World);
 
 					FHitResult NeighborSideSubGridHitResult;
-					bool NeighborSideSubGridFloorExists = SubGridFloorTrace(i, j, NeighborDir, 0.8, NeighborSideSubGridHitResult, World);
+					bool NeighborSideSubGridFloorExists = SubGridFloorTrace(i, j, MaxZ, MinZ, NeighborDir, 0.8, NeighborSideSubGridHitResult, World);
 
 					if (NodeSideSubGridFloorExists && NeighborSideSubGridFloorExists) {
 						const FVector& NodeSideSubGridLocation     = NodeSideSubGridHitResult.Location;
@@ -333,7 +336,7 @@ void FMappingServer::PopulateMap(const UWorld& World, const FBox& BoundingBox)
 					const FVector2f Midpoint = (PointA + PointB) / 2.0;
 
 					FHitResult MidpointHitResult;
-					const bool DidMidpointTraceHit = FloorTrace(Midpoint.X, Midpoint.Y, MidpointHitResult, World);
+					const bool DidMidpointTraceHit = FloorTrace(Midpoint.X, Midpoint.Y, MaxZ, MinZ, MidpointHitResult, World);
 
 					// tracing between two valid navmesh points should never fail (ie. no gaps)
 					check(DidMidpointTraceHit);
@@ -371,4 +374,3 @@ void FMappingServer::PopulateMap(const UWorld& World, const FBox& BoundingBox)
 		}
 	}
 }
-
