@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+
 #include "MapAdjacencyList.h"
 
 class UWorld;
@@ -16,7 +18,6 @@ public:
 		return Instance;
 	}
 
-	void RemapFromWorld(const UWorld& World);
 	void RemapFromBound(const UWorld& World, const FBox& Bound);
 	TArray<FVector> FindPath(const FVector& From, const FVector& To);
 	TPair<TArray<FVector>, TArray<FVector>> FindPath(const FVector& From, const FVector& To, const float DistanceBudget);
@@ -24,6 +25,7 @@ public:
 
 	TArray<FMapAdjacencyList::FNode> GetMapNodeList();
 	TArray<FMapAdjacencyList::FEdge> GetMapEdgeList();
+	std::optional<std::reference_wrapper<const FMapAdjacencyList::FNode>> GetNode(const FMapAdjacencyList::FNode::ID ID); 
 	
 	static FVector RoundToGrid(const FVector& Value);
 	static FVector TruncToGrid(const FVector& Value);
@@ -52,9 +54,6 @@ private:
 	void PopulateMap(const UWorld& World, const FBox& BoundingBox);
 
 	FMapAdjacencyList Map;
-
-	// TODO: make into customizable parameter; assume for now 64x64 grid
-	static constexpr int ASSUMED_MAX_MAP_SIZE = 64;
 
 	// TODO: make into customizable parameter; assume for now 100cm grid spacing
 	static constexpr float ASSUMED_GRID_SPACING = 100.0;

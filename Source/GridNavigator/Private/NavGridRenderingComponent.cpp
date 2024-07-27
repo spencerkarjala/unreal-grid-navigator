@@ -75,8 +75,9 @@ FDebugRenderSceneProxy* UNavGridRenderingComponent::CreateDebugSceneProxy()
 	if (!NavGridSceneProxy) {
 		return nullptr;
 	}
-	
-	const auto NodeList = FMappingServer::GetInstance().GetMapNodeList();
+
+	auto& MapServer = FMappingServer::GetInstance();
+	const auto NodeList = MapServer.GetMapNodeList();
 	
 	for (const auto& Node : NodeList) {
 		const FVector BoxPos(Node.X * 100.00, Node.Y * 100.0, Node.Layer * 25.0);
@@ -84,6 +85,17 @@ FDebugRenderSceneProxy* UNavGridRenderingComponent::CreateDebugSceneProxy()
 
 		const FBox BoxDims(BoxPos - BoxDiagonal, BoxPos + BoxDiagonal);
 		FColor BoxColor(0, 255, 0);
+		
+		for (const auto& Edge : Node.OutEdges) {
+			const auto& CurrentNode = MapServer.GetNode(Edge.InID);
+			const auto& NeighborNode = MapServer.GetNode(Edge.OutID);
+
+			check(CurrentNode.has_value() && CurrentNode.value().get() == Node)
+
+			if (!NeighborNode.has_value()) {
+				BoxColor = FColor(255, 0, 0);
+			}
+		}
 		
 		NavGridSceneProxy->Boxes.Emplace(BoxDims, BoxColor);
 	}

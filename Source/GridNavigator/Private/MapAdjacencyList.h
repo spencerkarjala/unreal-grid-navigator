@@ -34,6 +34,11 @@ public:
 			Ar << Rhs.X << Rhs.Y << Rhs.Layer << Rhs.Height << Rhs.OutEdges;
 			return Ar;
 		}
+
+		bool operator==(const FNode& Rhs) const
+		{
+			return X == Rhs.X && Y == Rhs.Y && Layer == Rhs.Layer;
+		}
 	};
 	
 	struct FEdge

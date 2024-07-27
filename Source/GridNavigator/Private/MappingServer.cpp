@@ -35,19 +35,6 @@ bool IsRoughlyEqual(const float Lhs, const float Rhs, const float Tolerance)
 	return FMath::Abs(Lhs - Rhs) < Tolerance;
 }
 
-void FMappingServer::RemapFromWorld(const UWorld& World)
-{
-	constexpr int HalfMapSize = ASSUMED_MAX_MAP_SIZE / 2;
-	constexpr int Layer = 0;
-
-	Map.Clear();
-
-	const FVector LowerBound(-HalfMapSize, -HalfMapSize, Layer);
-	const FVector UpperBound(HalfMapSize, HalfMapSize, Layer);
-
-	PopulateMap(World, FBox(LowerBound, UpperBound));
-}
-
 void FMappingServer::RemapFromBound(const UWorld& World, const FBox& Bound)
 {
 	Map.Clear();
@@ -156,6 +143,14 @@ TArray<FMapAdjacencyList::FNode> FMappingServer::GetMapNodeList()
 TArray<FMapAdjacencyList::FEdge> FMappingServer::GetMapEdgeList()
 {
 	return Map.GetEdgeList();
+}
+
+std::optional<std::reference_wrapper<const FMapAdjacencyList::FNode>> FMappingServer::GetNode(const FMapAdjacencyList::FNode::ID ID)
+{
+	if (!Map.Nodes.Contains(ID)) {
+		return std::nullopt;
+	}
+	return Map.Nodes[ID];
 }
 
 FVector FMappingServer::RoundToGrid(const FVector& Value)
