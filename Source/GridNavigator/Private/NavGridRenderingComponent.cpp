@@ -83,7 +83,9 @@ FDebugRenderSceneProxy* UNavGridRenderingComponent::CreateDebugSceneProxy()
 		const FVector BoxDiagonal(2.5, 2.5, 2.5);
 
 		const FBox BoxDims(BoxPos - BoxDiagonal, BoxPos + BoxDiagonal);
-		NavGridSceneProxy->Boxes.Emplace(BoxDims, FColor(0, 255, 0));
+		FColor BoxColor(0, 255, 0);
+		
+		NavGridSceneProxy->Boxes.Emplace(BoxDims, BoxColor);
 	}
 
 	this->SetVisibility(true);

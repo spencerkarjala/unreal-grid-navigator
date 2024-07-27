@@ -2,7 +2,9 @@
 
 #include <sstream>
 
+#include "GridNavigatorConfig.h"
 #include "Engine/World.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 bool FloorTrace(const float I, const float J, const float MaxZ, const float MinZ, FHitResult& HitResult, const UWorld& World)
 {
@@ -234,7 +236,13 @@ void FMappingServer::PopulateMap(const UWorld& World, const FBox& BoundingBox)
 				continue;
 			}
 
+			FHitResult CeilHitResult(ForceInit);
 			const int Layer = FMath::RoundToInt(HitResult.Location.Z / 25.0);
+			const bool bShortRoofOverHitPoint = FloorTrace(i, j, Layer, Layer + GridNavigatorConfig::MinEmptyLayersForValidNode, CeilHitResult, World);
+
+			if (bShortRoofOverHitPoint) {
+				continue;
+			}
 			
 			Map.AddNode(i, j, Layer, HitResult.Location.Z);
 
@@ -245,7 +253,7 @@ void FMappingServer::PopulateMap(const UWorld& World, const FBox& BoundingBox)
 				if (!NeighborNodeExists) {
 					continue;
 				}
-
+	
 				const float NodeHeight = HitResult.Location.Z;
 				const float NeighborHeight = NeighborHitResult.Location.Z;
 
