@@ -255,7 +255,9 @@ void FMappingServer::PopulateMap(const UWorld& World, const FBox& BoundingBox)
 			const int Layer = FMath::RoundToInt(HitResult.Location.Z / 25.0);
 			const bool bShortRoofOverHitPoint = FloorTrace(i, j, Layer, Layer + GridNavigatorConfig::MinEmptyLayersForValidNode, CeilHitResult, World);
 
-			if (bShortRoofOverHitPoint) {
+			// end loop if there's nowhere to stand; also, ignore walls that might be directly
+			// on top of the node (ie. have a near-zero Z component for normal vector)
+			if (bShortRoofOverHitPoint && CeilHitResult.Normal.Z > 1.0) {
 				continue;
 			}
 			
