@@ -263,9 +263,15 @@ void FMappingServer::PopulateMap(const UWorld& World, const FBox& BoundingBox)
 
 			for (const auto& [NeighborI, NeighborJ] : Neighbors) {
 				FHitResult NeighborHitResult(ForceInit);
-				const bool NeighborNodeExists = FloorTrace(i + NeighborI, j + NeighborJ, MaxZ, MinZ, NeighborHitResult, World);
+				FIntVector3 NeighborIndex(i + NeighborI, j + NeighborJ, 0);
+				const bool NeighborNodeExists = FloorTrace(NeighborIndex.X, NeighborIndex.Y, MaxZ, MinZ, NeighborHitResult, World);
 			
 				if (!NeighborNodeExists) {
+					continue;
+				}
+
+				// if neighbor is outside bounding box, quit early
+				if (!BoundingBox.IsInside(NeighborHitResult.Location)) {
 					continue;
 				}
 	
