@@ -43,11 +43,8 @@ void FMappingServer::RemapFromBound(const UWorld& World, const FBox& Bound)
 
 TArray<FVector> FMappingServer::FindPath(const FVector& From, const FVector& To)
 {
-	FVector2f FromWorldXY(From.X, From.Y);
-	FVector2f ToWorldXY(To.X, To.Y);
-
-	FIntVector2 FromGridCoord = WorldToGridIndex(FromWorldXY);
-	FIntVector2 ToGridCoord   = WorldToGridIndex(ToWorldXY);
+	FIntVector3 FromGridCoord = WorldToGridIndex(From);
+	FIntVector3 ToGridCoord   = WorldToGridIndex(To);
 	
 	const TArray<FVector> IndexPoints = Map.FindPath(FromGridCoord, ToGridCoord);
 

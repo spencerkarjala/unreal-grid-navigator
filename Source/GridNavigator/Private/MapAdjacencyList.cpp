@@ -2,6 +2,7 @@
 #include "PriorityQueue.h"
 
 #include <functional>
+#include <optional>
 
 DECLARE_LOG_CATEGORY_CLASS(LogMapAdjacencyList, Log, All)
 
@@ -113,7 +114,7 @@ struct FAStarNode
 	FMapAdjacencyList::EMapEdgeType InboundEdgeType;
 };
 
-TArray<FVector> FMapAdjacencyList::FindPath(const FIntVector2& From, const FIntVector2& To) {
+TArray<FVector> FMapAdjacencyList::FindPath(const FIntVector3& From, const FIntVector3& To) {
 	const std::function Heuristic = [this](const FVector& Lhs, const FVector& Rhs) -> double
 	{
 		// ignore height since we only care about grid coordinates
@@ -126,12 +127,19 @@ TArray<FVector> FMapAdjacencyList::FindPath(const FIntVector2& From, const FIntV
 	TMap<const FNode*, double> CostSoFar;
 	TArray<FAStarNode*> NodesToFree;
 
-	if (!this->HasNode(From.X, From.Y, 0) || !this->HasNode(To.X, To.Y, 0)) {
+	if (!this->HasNode(From.X, From.Y, From.Z) || !this->HasNode(To.X, To.Y, To.Z)) {
 		return TArray<FVector>();
 	}
 
-	const FNode& StartNode = this->GetNode(From.X, From.Y, 0);
-	const FNode& EndNode   = this->GetNode(To.X,   To.Y,   0);
+	const auto StartNodeResult = GetNode(From.X, From.Y, From.Z);
+	const auto EndNodeResult   = GetNode(To.X,   To.Y,   To.Z);
+
+	if (!StartNodeResult.has_value() || !EndNodeResult.has_value()) {
+		return TArray<FVector>();
+	}
+
+	const auto& StartNode = StartNodeResult->get();
+	const auto& EndNode   = EndNodeResult->get();
 
 	FVector StartLocation(StartNode.X, StartNode.Y, StartNode.Height);
 	FVector EndLocation  (EndNode.X,   EndNode.Y,   EndNode.Height);
@@ -156,7 +164,12 @@ TArray<FVector> FMapAdjacencyList::FindPath(const FIntVector2& From, const FIntV
 
 		const FVector& CurrNodeLocation = CurrNodePtr->Location;
 		const uint32 CurrNodeLayer = FMath::RoundToInt(CurrNodeLocation.Z / 25.0);
-		const FNode& CurrNode = this->GetNode(CurrNodeLocation.X, CurrNodeLocation.Y, CurrNodeLayer);
+		
+		const auto CurrNodeResult = this->GetNode(CurrNodeLocation.X, CurrNodeLocation.Y, CurrNodeLayer);
+		if (!CurrNodeResult.has_value()) {
+			continue;
+		}
+		const auto& CurrNode = CurrNodeResult->get();
 		const TArray<FEdge>& CurrOutwardEdges = CurrNode.OutEdges;
 
 		for (const auto& Edge : CurrOutwardEdges) {
@@ -274,9 +287,11 @@ FMapAdjacencyList::FNode::ID FMapAdjacencyList::GetNodeId(const FNode& Node)
 	return GetNodeId(Node.X, Node.Y, Node.Layer);
 }
 
-FMapAdjacencyList::FNode& FMapAdjacencyList::GetNode(const int64 X, const int64 Y, const int64 Layer)
+std::optional<std::reference_wrapper<const FMapAdjacencyList::FNode>> FMapAdjacencyList::GetNode(const int64 X, const int64 Y, const int64 Layer)
 {
-	const FNode::ID Id = this->GetNodeId(X, Y, Layer);
-	check(this->Nodes.Contains(Id));
+	const FNode::ID Id = GetNodeId(X, Y, Layer);
+	if (!Nodes.Contains(Id)) {
+		return std::nullopt;
+	}
 	return Nodes[Id];
 }

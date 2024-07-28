@@ -1,4 +1,5 @@
 #pragma once
+#include <optional>
 
 class FMapAdjacencyList
 {
@@ -95,12 +96,12 @@ public:
 	void Clear();
 	FString Stringify();
 	void DrawDebug(const UWorld& World);
-	TArray<FVector> FindPath(const FIntVector2& From, const FIntVector2& To);
+	TArray<FVector> FindPath(const FIntVector3& From, const FIntVector3& To);
 
 private:
 	static FNode::ID GetNodeId(const int64 X, const int64 Y, const int64 Layer);
 	static FNode::ID GetNodeId(const FNode& Node);
-	FNode& GetNode(const int64 X, const int64 Y, const int64 Layer);
+	std::optional<std::reference_wrapper<const FMapAdjacencyList::FNode>> GetNode(const int64 X, const int64 Y, const int64 Layer);
 
 	// TODO: upgrade to parameters
 	static constexpr int AssumedMaxLayers = 16;

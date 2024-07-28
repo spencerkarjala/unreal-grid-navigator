@@ -95,12 +95,29 @@ bool UGNCursorComponent::UpdatePosition(const FVector& WorldDestination, const F
 	}
 
 	// perform pathfinding
+	const auto* World = GetWorld();
+	if (!IsValid(World)) {
+		UE_LOG(LogGNCursorComponent, Error, TEXT("Failed to GetWorld while trying to UpdatePosition"));
+		return false;
+	}
+	
 	const auto* OwnerActor = GetOwner();
 	if (!IsValid(OwnerActor)) {
 		UE_LOG(LogGNCursorComponent, Error, TEXT("Failed to retrieve OwnerActor when trying to UpdatePosition"));
 		return false;
 	}
-	const TArray<FVector> PathPoints = FMappingServer::GetInstance().FindPath(OwnerActor->GetActorLocation(), DestinationRounded);
+	const FVector& OwnerActorLocation = OwnerActor->GetActorLocation();
+	const FVector FloorTraceEnd(OwnerActorLocation.X, OwnerActorLocation.Y, OwnerActorLocation.Z - 1000.0);
+
+	// trace from character position to floor to get pathfinding start location
+	FHitResult FloorTraceResult;
+	const bool bFloorBelowCharacterFound = World->LineTraceSingleByObjectType(FloorTraceResult, OwnerActorLocation, FloorTraceEnd, ECC_WorldStatic);
+	if (!bFloorBelowCharacterFound) {
+		UE_LOG(LogGNCursorComponent, Warning, TEXT("Tried to UpdatePosition while character was not above a valid floor"));
+		return false;
+	}
+	
+	const TArray<FVector> PathPoints = FMappingServer::GetInstance().FindPath(FloorTraceResult.Location, DestinationRounded);
 
 	// hide cursor if destination is not reachable
 	if (PathPoints.Num() < 2) {
