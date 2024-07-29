@@ -49,20 +49,26 @@ UGNCursorComponent::UGNCursorComponent()
 	DestinationMeshComponent->SetMobility(EComponentMobility::Movable);
 	DestinationMeshComponent->SetVisibility(true, true);
 
-	// start with 4 splines, re-use and add more if needed
-	PathMeshComponents.SetNum(4);
-	for (int i = 0; i < 4; ++i) {
-		FString SplineMeshName = FString::Printf(TEXT("GNCursorComponent.PathMesh.%d"), i);
-		PathMeshComponents[i] = CreateDefaultSubobject<USplineMeshComponent>(*SplineMeshName);
-		if (!PathMeshComponents[i]) {
-			UE_LOG(LogGNCursorComponent, Error, TEXT("Failed to initialize PathMeshComponent with id '%s'"), *SplineMeshName);
-			return;
-		}
-	
-		PathMeshComponents[i]->SetCollisionResponseToAllChannels(ECR_Ignore);
-		PathMeshComponents[i]->SetStaticMesh(PathMeshBase);
-		PathMeshComponents[i]->SetVisibility(false);
-	}
+	// // start with 4 splines, re-use and add more if needed
+	// PathMeshComponents.SetNum(4);
+	// for (int i = 0; i < 4; ++i) {
+	// 	const FString SplineMeshName = FString::Printf(TEXT("GNCursorComponent.PathMesh.%d"), i);
+	// 	auto* NewSplineMesh = CreateDefaultSubobject<USplineMeshComponent>(*SplineMeshName);
+	//
+	// 	if (!NewSplineMesh) {
+	// 		UE_LOG(LogGNCursorComponent, Error, TEXT("Failed to initialize PathMeshComponent with id '%s'"), *SplineMeshName);
+	// 		return;
+	// 	}
+	//
+	// 	NewSplineMesh->SetMobility(EComponentMobility::Movable);
+	// 	NewSplineMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
+	// 	NewSplineMesh->SetStaticMesh(PathMeshBase);
+	// 	NewSplineMesh->SetVisibility(true);
+	// 	NewSplineMesh->SetAbsolute(true, true, true);
+	// 	NewSplineMesh->SetWorldLocation(FVector(0, 0, 0));
+	//
+	// 	PathMeshComponents.Add(NewSplineMesh);
+	// }
 }
 
 void UGNCursorComponent::PostInitProperties()
@@ -212,34 +218,27 @@ bool UGNCursorComponent::UpdatePath(const TArray<FVector>& Points)
 	return UpdatePathMesh();
 }
 
+#pragma optimize("", off)
 bool UGNCursorComponent::UpdatePathMesh()
 {
 	if (!PathComponent) {
 		UE_LOG(LogGNCursorComponent, Error, TEXT("Tried to UpdatePathMesh without a valid PathComponen"));
 		return false;
 	}
-	
+
+	PathMeshComponents.Empty();
+
 	const int NumSegments = PathComponent->GetNumberOfSplineSegments();
 	int NumInstantiatedSegmentComponents = PathMeshComponents.Num();
 
 	// only runs in the case that NumSegments is more than the available number of mesh components available,
 	// in which case new mesh components are created and instantiated
 	for (int i = NumInstantiatedSegmentComponents; i < NumSegments; ++i) {
-		FString SplineMeshName = FString::Printf(TEXT("GNCursorComponent.PathMesh.%d"), i);
-		auto* NewPathMeshComponent = NewObject<USplineMeshComponent>(this, USplineMeshComponent::StaticClass(), *SplineMeshName);
-		check(NewPathMeshComponent);
-		
-		NewPathMeshComponent->SetMobility(EComponentMobility::Movable);
-		NewPathMeshComponent->AttachToComponent(this, FAttachmentTransformRules::KeepWorldTransform);
-		NewPathMeshComponent->RegisterComponent();
-		NewPathMeshComponent->SetStaticMesh(PathMeshBase);
-		NewPathMeshComponent->SetVisibility(true);
-
-		PathMeshComponents.Add(NewPathMeshComponent);
+		AddNewSplineMeshComponent();
 	}
 	
 	NumInstantiatedSegmentComponents = PathMeshComponents.Num();
-	const int NumIterations = FMath::Min(NumSegments, NumInstantiatedSegmentComponents);
+	int NumIterations = FMath::Min(NumSegments, NumInstantiatedSegmentComponents);
 	const FVector2D PathMeshScale(PathMeshScaleFactor);
 
 	// set up spline mesh components that are already instantiated
@@ -267,6 +266,31 @@ bool UGNCursorComponent::UpdatePathMesh()
 		PathMeshComponent->UpdateMesh();
 		PathMeshComponent->SetVisibility(false);
 	}
-	
+
 	return true;
+}
+#pragma optimize("", on)
+
+void UGNCursorComponent::AddNewSplineMeshComponent()
+{
+	const int NewSplineMeshIndex = PathMeshComponents.Num();
+
+	const FString SplineMeshName = FString::Printf(TEXT("GNCursorComponent.PathMesh.%d"), NewSplineMeshIndex);
+	auto* NewSplineMesh = NewObject<USplineMeshComponent>(this, USplineMeshComponent::StaticClass(), *SplineMeshName);
+
+	if (!NewSplineMesh) {
+		UE_LOG(LogGNCursorComponent, Error, TEXT("Failed to initialize PathMeshComponent with id '%s'"), *SplineMeshName);
+		return;
+	}
+
+	NewSplineMesh->SetMobility(EComponentMobility::Movable);
+	NewSplineMesh->AttachToComponent(this, FAttachmentTransformRules::KeepWorldTransform);
+	NewSplineMesh->RegisterComponent();
+	NewSplineMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
+	NewSplineMesh->SetStaticMesh(PathMeshBase);
+	NewSplineMesh->SetVisibility(false);
+	NewSplineMesh->SetAbsolute(true, true, true);
+	NewSplineMesh->SetWorldLocation(FVector(0, 0, 0));
+	
+	PathMeshComponents.Add(NewSplineMesh);
 }

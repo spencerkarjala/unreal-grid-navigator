@@ -65,6 +65,7 @@ protected:
 private:
 	bool UpdatePath(const TArray<FVector>& Points);
 	bool UpdatePathMesh();
+	void AddNewSplineMeshComponent();
 
 	UPROPERTY()
 	TObjectPtr<USplineComponent> PathComponent;
