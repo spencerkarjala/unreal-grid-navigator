@@ -141,8 +141,8 @@ TArray<FVector> FMapAdjacencyList::FindPath(const FIntVector3& From, const FIntV
 	const auto& StartNode = StartNodeResult->get();
 	const auto& EndNode   = EndNodeResult->get();
 
-	FVector StartLocation(StartNode.X, StartNode.Y, StartNode.Height);
-	FVector EndLocation  (EndNode.X,   EndNode.Y,   EndNode.Height);
+	FVector StartLocation(StartNode.X, StartNode.Y, StartNode.Layer);
+	FVector EndLocation  (EndNode.X,   EndNode.Y,   EndNode.Layer);
 	
 	FAStarNode* FromAStarNode = new FAStarNode({ nullptr, StartLocation, 0.0, EMapEdgeType::None });
 	NodesToFree.Push(FromAStarNode);
@@ -162,10 +162,7 @@ TArray<FVector> FMapAdjacencyList::FindPath(const FIntVector3& From, const FIntV
 			break;
 		}
 
-		const FVector& CurrNodeLocation = CurrNodePtr->Location;
-		const uint32 CurrNodeLayer = FMath::RoundToInt(CurrNodeLocation.Z / 25.0);
-		
-		const auto CurrNodeResult = this->GetNode(CurrNodeLocation.X, CurrNodeLocation.Y, CurrNodeLayer);
+		const auto CurrNodeResult = this->GetNode(CurrLocation.X, CurrLocation.Y, CurrLocation.Z);
 		if (!CurrNodeResult.has_value()) {
 			continue;
 		}

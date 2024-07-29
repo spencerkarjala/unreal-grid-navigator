@@ -50,10 +50,8 @@ TArray<FVector> FMappingServer::FindPath(const FVector& From, const FVector& To)
 
 	// map (I,J,Z) triplets to (X,Y,Z) triplets
 	TArray<FVector> WorldPoints;
-	for (const FVector& Point : IndexPoints) {
-		FIntVector2 PointIndex(Point.X, Point.Y);
-		FVector2f PointWorldXY = GridIndexToWorld(PointIndex);
-		FVector PointWorld(PointWorldXY.X, PointWorldXY.Y, Point.Z);
+	for (const FVector& PointIndex : IndexPoints) {
+		FVector PointWorld = GridIndexToWorld(PointIndex);
 		WorldPoints.Add(PointWorld);
 	}
 
