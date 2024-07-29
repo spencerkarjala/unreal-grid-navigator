@@ -188,7 +188,7 @@ TArray<FVector> FMapAdjacencyList::FindPath(const FIntVector3& From, const FIntV
 
 			check(&CurrNode == &InNode);
 
-			const FVector NeighborLocation = FVector(OutNode.X, OutNode.Y, OutNode.Height);
+			const FVector NeighborLocation = FVector(OutNode.X, OutNode.Y, OutNode.Layer);
 
 			const double NeighborCost = CurrCost + Heuristic(CurrLocation, NeighborLocation);
 

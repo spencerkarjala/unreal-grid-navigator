@@ -7,7 +7,7 @@
 
 bool FloorTrace(const float I, const float J, const float MaxZ, const float MinZ, FHitResult& HitResult, const UWorld& World)
 {
-	const FIntVector2 GridIndex(I, J);
+	const FVector2f GridIndex(I, J);
 	const FVector2f WorldCoordXY = FMappingServer::GridIndexToWorld(GridIndex);
 	const FVector WorldLocationTraceStart(WorldCoordXY.X, WorldCoordXY.Y, MaxZ * 25.0);
 	const FVector WorldLocationTraceEnd  (WorldCoordXY.X, WorldCoordXY.Y, MinZ * 25.0);
@@ -205,7 +205,24 @@ FVector2f FMappingServer::GridIndexToWorld(const FIntVector2& IndexCoord)
 	);
 }
 
+FVector2f FMappingServer::GridIndexToWorld(const FVector2f& IndexCoord)
+{
+	return FVector2f(
+		static_cast<float>(IndexCoord.X) * static_cast<float>(GridNavigatorConfig::GridSizeX),
+		static_cast<float>(IndexCoord.Y) * static_cast<float>(GridNavigatorConfig::GridSizeY)
+	);
+}
+
 FVector FMappingServer::GridIndexToWorld(const FIntVector3& IndexCoord)
+{
+	return FVector(
+		static_cast<float>(IndexCoord.X) * static_cast<float>(GridNavigatorConfig::GridSizeX),
+		static_cast<float>(IndexCoord.Y) * static_cast<float>(GridNavigatorConfig::GridSizeY),
+		static_cast<float>(IndexCoord.Z) * static_cast<float>(GridNavigatorConfig::GridSizeLayer)
+	);
+}
+
+FVector FMappingServer::GridIndexToWorld(const FVector& IndexCoord)
 {
 	return FVector(
 		static_cast<float>(IndexCoord.X) * static_cast<float>(GridNavigatorConfig::GridSizeX),
