@@ -81,6 +81,8 @@ public:
 				uint8 TypeAsInt = Rhs.Type;
 				Ar << TypeAsInt;
 			}
+
+			Ar << Rhs.Direction;
 			
 			return Ar;
 		}
