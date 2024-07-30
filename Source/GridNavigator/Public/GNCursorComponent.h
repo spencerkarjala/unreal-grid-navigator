@@ -14,7 +14,8 @@ class GRIDNAVIGATOR_API UGNCursorComponent : public USceneComponent
 public:
 	UGNCursorComponent();
 	
-	virtual void PostInitProperties() override;
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	/**
 	 * @brief Sets the endpoint position of the GridNavigatorCursor using a world destination vector.

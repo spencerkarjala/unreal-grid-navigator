@@ -48,32 +48,18 @@ UGNCursorComponent::UGNCursorComponent()
 	DestinationMeshComponent->SetStaticMesh(DestinationMesh.Object);
 	DestinationMeshComponent->SetMobility(EComponentMobility::Movable);
 	DestinationMeshComponent->SetVisibility(true, true);
-
-	// // start with 4 splines, re-use and add more if needed
-	// PathMeshComponents.SetNum(4);
-	// for (int i = 0; i < 4; ++i) {
-	// 	const FString SplineMeshName = FString::Printf(TEXT("GNCursorComponent.PathMesh.%d"), i);
-	// 	auto* NewSplineMesh = CreateDefaultSubobject<USplineMeshComponent>(*SplineMeshName);
-	//
-	// 	if (!NewSplineMesh) {
-	// 		UE_LOG(LogGNCursorComponent, Error, TEXT("Failed to initialize PathMeshComponent with id '%s'"), *SplineMeshName);
-	// 		return;
-	// 	}
-	//
-	// 	NewSplineMesh->SetMobility(EComponentMobility::Movable);
-	// 	NewSplineMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
-	// 	NewSplineMesh->SetStaticMesh(PathMeshBase);
-	// 	NewSplineMesh->SetVisibility(true);
-	// 	NewSplineMesh->SetAbsolute(true, true, true);
-	// 	NewSplineMesh->SetWorldLocation(FVector(0, 0, 0));
-	//
-	// 	PathMeshComponents.Add(NewSplineMesh);
-	// }
 }
 
-void UGNCursorComponent::PostInitProperties()
+void UGNCursorComponent::BeginPlay()
 {
-	Super::PostInitProperties();
+	Super::BeginPlay();
+}
+
+void UGNCursorComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	PathMeshComponents.Empty();
 }
 
 bool UGNCursorComponent::UpdatePosition(const FVector& WorldDestination, const FVector& DestNormal)
@@ -218,15 +204,12 @@ bool UGNCursorComponent::UpdatePath(const TArray<FVector>& Points)
 	return UpdatePathMesh();
 }
 
-#pragma optimize("", off)
 bool UGNCursorComponent::UpdatePathMesh()
 {
 	if (!PathComponent) {
 		UE_LOG(LogGNCursorComponent, Error, TEXT("Tried to UpdatePathMesh without a valid PathComponen"));
 		return false;
 	}
-
-	PathMeshComponents.Empty();
 
 	const int NumSegments = PathComponent->GetNumberOfSplineSegments();
 	int NumInstantiatedSegmentComponents = PathMeshComponents.Num();
@@ -246,9 +229,10 @@ bool UGNCursorComponent::UpdatePathMesh()
 		auto& PathMeshComponent = PathMeshComponents[i];
 		check(PathMeshComponent);
 		
-		const FSplinePoint& P0 = PathComponent->GetSplinePointAt(i, ESplineCoordinateSpace::Local);
-		const FSplinePoint& P1 = PathComponent->GetSplinePointAt(i+1, ESplineCoordinateSpace::Local);
+		const FSplinePoint& P0 = PathComponent->GetSplinePointAt(i, ESplineCoordinateSpace::World);
+		const FSplinePoint& P1 = PathComponent->GetSplinePointAt(i+1, ESplineCoordinateSpace::World);
 
+		PathMeshComponent->SetRelativeLocationAndRotation(FVector(0, 0, 0), FRotator(0, 0, 0));
 		PathMeshComponent->SetStartAndEnd(P0.Position, P0.LeaveTangent, P1.Position, P1.ArriveTangent, false);
 		PathMeshComponent->SetStartScale(PathMeshScale, false);
 		PathMeshComponent->SetEndScale(PathMeshScale, false);
@@ -269,7 +253,6 @@ bool UGNCursorComponent::UpdatePathMesh()
 
 	return true;
 }
-#pragma optimize("", on)
 
 void UGNCursorComponent::AddNewSplineMeshComponent()
 {
@@ -288,9 +271,10 @@ void UGNCursorComponent::AddNewSplineMeshComponent()
 	NewSplineMesh->RegisterComponent();
 	NewSplineMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
 	NewSplineMesh->SetStaticMesh(PathMeshBase);
-	NewSplineMesh->SetVisibility(false);
 	NewSplineMesh->SetAbsolute(true, true, true);
-	NewSplineMesh->SetWorldLocation(FVector(0, 0, 0));
+	NewSplineMesh->SetVisibility(false);
 	
 	PathMeshComponents.Add(NewSplineMesh);
+
+	UE_LOG(LogGNCursorComponent, Error, TEXT("Added spline mesh number %d"), PathMeshComponents.Num());
 }
