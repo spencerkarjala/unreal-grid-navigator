@@ -53,8 +53,6 @@ void AGNRecastNavMesh::HandleRebuildNavigation() const
 		const auto MinIndex = FMappingServer::RoundToGrid(Bound.Min);
 		const auto MaxIndex = FMappingServer::RoundToGrid(Bound.Max);
 
-		UE_LOG(LogRGNRecastNavMesh, Warning, TEXT("new bounds: (%0.2f, %0.2f, %0.2f)  (%0.2f, %0.2f, %0.2f)"), MinIndex.X, MinIndex.Y, MinIndex.Z, MaxIndex.X, MaxIndex.Y, MaxIndex.Z);
-
 		FMappingServer::GetInstance().RemapFromBound(*World, FBox(MinIndex, MaxIndex));
 
 		break;
