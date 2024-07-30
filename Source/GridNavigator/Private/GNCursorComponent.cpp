@@ -275,6 +275,4 @@ void UGNCursorComponent::AddNewSplineMeshComponent()
 	NewSplineMesh->SetVisibility(false);
 	
 	PathMeshComponents.Add(NewSplineMesh);
-
-	UE_LOG(LogGNCursorComponent, Error, TEXT("Added spline mesh number %d"), PathMeshComponents.Num());
 }
