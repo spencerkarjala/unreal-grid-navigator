@@ -107,7 +107,7 @@ FDebugRenderSceneProxy* UNavGridRenderingComponent::CreateDebugSceneProxy()
 				break;
 			case FMapAdjacencyList::EMapEdgeType::CliffDown:
 			case FMapAdjacencyList::EMapEdgeType::CliffUp:
-				LineColor = FColor(255, 0, 255);
+				LineColor = FColor(70, 0, 70);
 				break;
 			}
 			
