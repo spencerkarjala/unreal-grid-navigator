@@ -18,6 +18,8 @@ public:
 
 	virtual void Serialize(FArchive& Ar) override;
 
+	virtual void ConditionalConstructGenerator() override;
+
 	UFUNCTION(CallInEditor, Category="Navigation", DisplayName="Rebuild Navigation")
 	void RebuildNavigation() const;
 

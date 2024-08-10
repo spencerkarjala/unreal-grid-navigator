@@ -8,8 +8,9 @@
 #include "NavGridRenderingComponent.h"
 #include "MappingServer.h"
 #include "NavMesh/PImplRecastNavMesh.h"
+#include "GNNavDataGenerator.h"
 
-DECLARE_LOG_CATEGORY_CLASS(LogRGNRecastNavMesh, Log, All);
+DECLARE_LOG_CATEGORY_CLASS(LogGNRecastNavMesh, Log, All);
 
 AGNRecastNavMesh::AGNRecastNavMesh(const FObjectInitializer& ObjectInitializer) : ARecastNavMesh(ObjectInitializer)
 {
@@ -34,6 +35,28 @@ void AGNRecastNavMesh::Serialize(FArchive& Ar)
 {
 	Super::Serialize(Ar);
 	FMappingServer::GetInstance().Serialize(Ar);
+}
+
+void AGNRecastNavMesh::ConditionalConstructGenerator()
+{
+	if (NavDataGenerator.IsValid()) {
+		NavDataGenerator->CancelBuild();
+		NavDataGenerator.Reset();
+	}
+
+	UWorld* World = GetWorld();
+	check(World);
+	const bool bRequiresGenerator = SupportsRuntimeGeneration() || !World->IsGameWorld();
+	if (!bRequiresGenerator) {
+		return;
+	}
+	
+	FGNNavDataGenerator* Generator = new FGNNavDataGenerator();
+	if (Generator == nullptr) {
+		UE_LOG(LogGNRecastNavMesh, Error, TEXT("Failed to instantiate new GNNavDataGenerator"));
+		return;
+	}
+	NavDataGenerator = MakeShareable(static_cast<FNavDataGenerator*>(Generator));
 }
 
 void AGNRecastNavMesh::RebuildNavigation() const
@@ -121,17 +144,17 @@ FPathFindingResult AGNRecastNavMesh::FindPath(const FNavAgentProperties& AgentPr
 
 	FPathFindingResult Result(ENavigationQueryResult::Error);
 
-	UE_LOG(LogRGNRecastNavMesh, Log, TEXT("Got cost limit of: '%0.2f'"), Query.CostLimit);
+	UE_LOG(LogGNRecastNavMesh, Log, TEXT("Got cost limit of: '%0.2f'"), Query.CostLimit);
 
 	const auto* Self = Cast<const ARecastNavMesh>(Query.NavData.Get());
 	const auto* NavFilter = Query.QueryFilter.Get();
 
 	if (!Self) {
-		UE_LOG(LogRGNRecastNavMesh, Error, TEXT("Failed to retrieve reference to RecastNavMesh in FindPath"));
+		UE_LOG(LogGNRecastNavMesh, Error, TEXT("Failed to retrieve reference to RecastNavMesh in FindPath"));
 		return Result;
 	}
 	if (!NavFilter) {
-		UE_LOG(LogRGNRecastNavMesh, Error, TEXT("Failed to retrieve reference to query filter in FindPath"));
+		UE_LOG(LogGNRecastNavMesh, Error, TEXT("Failed to retrieve reference to query filter in FindPath"));
 		return Result;
 	}
 	
@@ -149,7 +172,7 @@ FPathFindingResult AGNRecastNavMesh::FindPath(const FNavAgentProperties& AgentPr
 	}
 
 	if (!NavMeshPath) {
-		UE_LOG(LogRGNRecastNavMesh, Error, TEXT("Somehow failed to instantiate destination navpath in FindPath; this should never happen"));
+		UE_LOG(LogGNRecastNavMesh, Error, TEXT("Somehow failed to instantiate destination navpath in FindPath; this should never happen"));
 		return Result;
 	}
 
