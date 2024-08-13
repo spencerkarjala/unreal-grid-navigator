@@ -94,19 +94,19 @@ FDebugRenderSceneProxy* UNavGridRenderingComponent::CreateDebugSceneProxy()
 
 			FColor LineColor;
 			switch(EdgeType) {
-			case FMapAdjacencyList::EMapEdgeType::None:
+			case NavigationMap::EMapEdgeType::None:
 				LineColor = FColor(50, 50, 50);
 				break;
-			case FMapAdjacencyList::EMapEdgeType::Direct:
+			case NavigationMap::EMapEdgeType::Direct:
 				LineColor = FColor(200, 200, 200);
 				break;
-			case FMapAdjacencyList::EMapEdgeType::Slope:
-			case FMapAdjacencyList::EMapEdgeType::SlopeTop:
-			case FMapAdjacencyList::EMapEdgeType::SlopeBottom:
+			case NavigationMap::EMapEdgeType::Slope:
+			case NavigationMap::EMapEdgeType::SlopeTop:
+			case NavigationMap::EMapEdgeType::SlopeBottom:
 				LineColor = FColor(0, 255, 255);
 				break;
-			case FMapAdjacencyList::EMapEdgeType::CliffDown:
-			case FMapAdjacencyList::EMapEdgeType::CliffUp:
+			case NavigationMap::EMapEdgeType::CliffDown:
+			case NavigationMap::EMapEdgeType::CliffUp:
 				LineColor = FColor(70, 0, 70);
 				break;
 			}

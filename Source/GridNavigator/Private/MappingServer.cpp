@@ -107,7 +107,7 @@ FBoxSphereBounds FMappingServer::GetBounds() const
 	FVector MaxBound(TNumericLimits<float>::Min());
 
 	// iterate over all nodes to determine max and min bounding points
-	TArray<FMapAdjacencyList::FNode> Nodes;
+	TArray<NavigationMap::FNode> Nodes;
 	Map.Nodes.GenerateValueArray(Nodes);
 	for (const auto& Node : Nodes) {
 		if (Node.X < MinBound.X) MinBound.X = Node.X;
@@ -129,17 +129,17 @@ FBoxSphereBounds FMappingServer::GetBounds() const
 	return FBoxSphereBounds(BoundsOriginScaled, BoundsExtentScaled, SphereRadius);
 }
 
-TArray<FMapAdjacencyList::FNode> FMappingServer::GetMapNodeList()
+TArray<NavigationMap::FNode> FMappingServer::GetMapNodeList()
 {
 	return Map.GetNodeList();
 }
 
-TArray<FMapAdjacencyList::FEdge> FMappingServer::GetMapEdgeList()
+TArray<NavigationMap::FEdge> FMappingServer::GetMapEdgeList()
 {
 	return Map.GetEdgeList();
 }
 
-std::optional<std::reference_wrapper<const FMapAdjacencyList::FNode>> FMappingServer::GetNode(const FMapAdjacencyList::FNode::ID ID)
+std::optional<std::reference_wrapper<const NavigationMap::FNode>> FMappingServer::GetNode(const NavigationMap::FNode::ID ID)
 {
 	if (!Map.Nodes.Contains(ID)) {
 		return std::nullopt;
@@ -327,23 +327,23 @@ void FMappingServer::PopulateMap(const UWorld& World, const FBox& BoundingBox)
 				const float HeightDelta = FMath::Abs(NodeHeight - NeighborHeight);
 				const bool IsDiagonal = (NeighborI != 0) && (NeighborJ != 0); 
 				
-				FMapAdjacencyList::EMapEdgeType EdgeType = FMapAdjacencyList::EMapEdgeType::None;
+				NavigationMap::EMapEdgeType EdgeType = NavigationMap::EMapEdgeType::None;
 
 				if (HeightDelta <= 1.0) {
-					EdgeType = FMapAdjacencyList::EMapEdgeType::Direct;
+					EdgeType = NavigationMap::EMapEdgeType::Direct;
 				}
 				else if (HeightDelta <= 51.0 && !IsDiagonal) {
-					EdgeType = FMapAdjacencyList::EMapEdgeType::Slope;
+					EdgeType = NavigationMap::EMapEdgeType::Slope;
 				}
 				else if (NodeHeight < NeighborHeight) {
-					EdgeType = FMapAdjacencyList::EMapEdgeType::CliffUp;
+					EdgeType = NavigationMap::EMapEdgeType::CliffUp;
 				}
 				else if (NodeHeight > NeighborHeight) {
-					EdgeType = FMapAdjacencyList::EMapEdgeType::CliffDown;
+					EdgeType = NavigationMap::EMapEdgeType::CliffDown;
 				}
 
 				// avoids stepping up/down on the edges of slopes from flat ground
-				if (EdgeType == FMapAdjacencyList::EMapEdgeType::Slope) {
+				if (EdgeType == NavigationMap::EMapEdgeType::Slope) {
 					const FIntVector2 NeighborDir(NeighborI, NeighborJ);
 					
 					FHitResult NodeSideSubGridHitResult;
@@ -363,17 +363,17 @@ void FMappingServer::PopulateMap(const UWorld& World, const FBox& BoundingBox)
 						const bool SlopesAreFlat = NodeSlopeZ + NeighborSlopeZ < 5.0;
 
 						if (SlopesAreEqual && SlopesAreFlat && NodeHeight < NeighborHeight) {
-							EdgeType = FMapAdjacencyList::EMapEdgeType::CliffUp;
+							EdgeType = NavigationMap::EMapEdgeType::CliffUp;
 						}
 						else if (SlopesAreEqual && SlopesAreFlat && NodeHeight > NeighborHeight) {
-							EdgeType = FMapAdjacencyList::EMapEdgeType::CliffDown;
+							EdgeType = NavigationMap::EMapEdgeType::CliffDown;
 						}
 					}
 				}
 
 				// include cases for sloping upwards + downwards so later pathfinding can figure out
 				// what height to put sub-grid points at (ie. tops/bottoms of slopes for path previews)
-				if (EdgeType == FMapAdjacencyList::EMapEdgeType::Slope) {
+				if (EdgeType == NavigationMap::EMapEdgeType::Slope) {
 					const FVector2f PointA(i, j);
 					const FVector2f PointB(i + NeighborI, j + NeighborJ);
 					const FVector2f Midpoint = (PointA + PointB) / 2.0;
@@ -398,10 +398,10 @@ void FMappingServer::PopulateMap(const UWorld& World, const FBox& BoundingBox)
 
 						// truth table time
 						// should probably refactor this to just use an array lookup
-						if      (NodeIsFlatSide     && NodeIsLowerSide)     EdgeType = FMapAdjacencyList::EMapEdgeType::SlopeBottom;
-						else if (NodeIsFlatSide     && NeighborIsLowerSide) EdgeType = FMapAdjacencyList::EMapEdgeType::SlopeTop;
-						else if (NeighborIsFlatSide && NodeIsLowerSide)     EdgeType = FMapAdjacencyList::EMapEdgeType::SlopeTop;
-						else if (NeighborIsFlatSide && NeighborIsLowerSide) EdgeType = FMapAdjacencyList::EMapEdgeType::SlopeBottom;
+						if      (NodeIsFlatSide     && NodeIsLowerSide)     EdgeType = NavigationMap::EMapEdgeType::SlopeBottom;
+						else if (NodeIsFlatSide     && NeighborIsLowerSide) EdgeType = NavigationMap::EMapEdgeType::SlopeTop;
+						else if (NeighborIsFlatSide && NodeIsLowerSide)     EdgeType = NavigationMap::EMapEdgeType::SlopeTop;
+						else if (NeighborIsFlatSide && NeighborIsLowerSide) EdgeType = NavigationMap::EMapEdgeType::SlopeBottom;
 					}
 				}
 
