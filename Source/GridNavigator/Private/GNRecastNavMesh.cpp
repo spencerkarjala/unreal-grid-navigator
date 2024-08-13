@@ -19,6 +19,7 @@ AGNRecastNavMesh::AGNRecastNavMesh(const FObjectInitializer& ObjectInitializer) 
 
 void AGNRecastNavMesh::OnNavigationBoundsChanged()
 {
+	Super::OnNavigationBoundsChanged();
 	HandleRebuildNavigation();
 }
 
