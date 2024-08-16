@@ -1,5 +1,9 @@
 #include "GNNavDataGenerator.h"
 
+#include "NavigationSystem.h"
+#include "AI/NavigationSystemBase.h"
+#include "MapData/NavGridLevel.h"
+
 DECLARE_LOG_CATEGORY_CLASS(LogGNNavDataGenerator, Log, All);
 
 void FGNDataBuildTask::DoWork()
@@ -44,7 +48,58 @@ void FGNNavDataGenerator::OnNavigationBoundsChanged()
 
 void FGNNavDataGenerator::RebuildDirtyAreas(const TArray<FNavigationDirtyArea>& DirtyAreas)
 {
-	FNavDataGenerator::RebuildDirtyAreas(DirtyAreas);
+	if (!LinkedNavData) {
+		UE_LOG(LogGNNavDataGenerator, Error, TEXT("Tried to RebuildDirtyAreas without a linked ANavigationData instance"));
+		return;
+	}
+	
+	const auto* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+	if (!IsValid(NavSys)) {
+		UE_LOG(LogGNNavDataGenerator, Error, TEXT("Failed to retrieve navigation system during RebuildDirtyAreas"));
+		return;
+	}
+	const auto& RegisteredBounds = NavSys->GetNavigationBounds();
+
+	// pre-filter registered bounds to get rid of any that may not be associated with this NavigationData instance
+	// would be nice to use UNavigationSystemV1::GetNavigationBoundsForNavData, but it strips ID information before return
+	TArray<FNavigationBounds> RegisteredBoundsForThisData;
+	RegisteredBoundsForThisData.Reserve(RegisteredBounds.Num());
+	const int32 AgentIndex = NavSys->GetSupportedAgentIndex(LinkedNavData);
+	const auto* LinkedLevel = LinkedNavData->GetLevel();
+	for (const auto& RegisteredBound : RegisteredBounds) {
+		if ((LinkedLevel == nullptr || RegisteredBound.Level == LinkedLevel) && RegisteredBound.SupportedAgents.Contains(AgentIndex)) {
+			RegisteredBoundsForThisData.Add(RegisteredBound);
+		}
+	}
+
+	if (RegisteredBoundsForThisData.Num() == 0) {
+		return;
+	} 
+
+	for (const auto& [UniqueID, AreaBox, SupportedAgents, Level] : RegisteredBoundsForThisData) {
+		const auto* BlockData = LinkedNavData->LevelData->GetBlock(UniqueID);
+
+		if (BlockData == nullptr) {
+			LinkedNavData->LevelData->AddBlock(UniqueID, NavGrid::FBlock(AreaBox));
+			continue;
+		}
+
+		if (!BlockData->Bounds.Equals(AreaBox, 0.001)) {
+			LinkedNavData->LevelData->UpdateBlock(UniqueID, NavGrid::FBlock(AreaBox));
+		}
+	}
+	
+	FString AreasString("\r\n");
+	for (const auto& DirtyArea : DirtyAreas) {
+		AreasString += DirtyArea.Bounds.ToString() + "\r\n";
+	}
+	AreasString += "aaa \r\n";
+	for (const auto& Area : NavSys->GetNavigationBounds()) {
+		AreasString += Area.AreaBox.ToString() + "\r\n";
+	}
+	UE_LOG(LogGNNavDataGenerator, Log, TEXT("Got RebuildDirtyAreas for: '%s'"), *AreasString);
+	
+	RebuildAll();
 }
 
 bool FGNNavDataGenerator::IsBuildInProgressCheckDirty() const

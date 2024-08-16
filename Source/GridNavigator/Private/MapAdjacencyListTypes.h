@@ -1,16 +1,15 @@
 #pragma once
 
-namespace NavigationMap
+namespace NavGrid
 {
 	enum EMapEdgeType : uint8
 	{
 		None,
 		Direct,
+		Cliff,
 		Slope,
 		SlopeBottom,
 		SlopeTop,
-		CliffUp,
-		CliffDown
 	};
 
 	struct FEdge;

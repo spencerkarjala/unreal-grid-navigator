@@ -9,18 +9,25 @@
 #include "MappingServer.h"
 #include "NavMesh/PImplRecastNavMesh.h"
 #include "GNNavDataGenerator.h"
+#include "MapData/NavGridLevel.h"
 
 DECLARE_LOG_CATEGORY_CLASS(LogGNRecastNavMesh, Log, All);
 
 AGNRecastNavMesh::AGNRecastNavMesh(const FObjectInitializer& ObjectInitializer) : ARecastNavMesh(ObjectInitializer)
 {
 	FindPathImplementation = this->FindPath;
+	LevelData = MakeShared<NavGrid::FLevel>();
 }
 
 void AGNRecastNavMesh::OnNavigationBoundsChanged()
 {
-	Super::OnNavigationBoundsChanged();
+	// Super::OnNavigationBoundsChanged();
 	HandleRebuildNavigation();
+}
+
+void AGNRecastNavMesh::RebuildDirtyAreas(const TArray<FNavigationDirtyArea>& DirtyAreas)
+{
+	Super::RebuildDirtyAreas(DirtyAreas);
 }
 
 UPrimitiveComponent* AGNRecastNavMesh::ConstructRenderingComponent()
@@ -52,7 +59,7 @@ void AGNRecastNavMesh::ConditionalConstructGenerator()
 		return;
 	}
 	
-	FGNNavDataGenerator* Generator = new FGNNavDataGenerator();
+	FGNNavDataGenerator* Generator = new FGNNavDataGenerator(this);
 	if (Generator == nullptr) {
 		UE_LOG(LogGNRecastNavMesh, Error, TEXT("Failed to instantiate new GNNavDataGenerator"));
 		return;

@@ -1,6 +1,6 @@
 #include "MapAdjacencyListTypes.h"
 
-namespace NavigationMap
+namespace NavGrid
 {
 	FNode::FNode()
 		: X(0), Y(0), Layer(0), Height(0.0) {}

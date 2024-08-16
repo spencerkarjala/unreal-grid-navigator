@@ -23,9 +23,9 @@ public:
 	TPair<TArray<FVector>, TArray<FVector>> FindPath(const FVector& From, const FVector& To, const float DistanceBudget);
 	FBoxSphereBounds GetBounds() const;
 
-	TArray<NavigationMap::FNode> GetMapNodeList();
-	TArray<NavigationMap::FEdge> GetMapEdgeList();
-	std::optional<std::reference_wrapper<const NavigationMap::FNode>> GetNode(const NavigationMap::FNode::ID ID); 
+	TArray<NavGrid::FNode> GetMapNodeList();
+	TArray<NavGrid::FEdge> GetMapEdgeList();
+	std::optional<std::reference_wrapper<const NavGrid::FNode>> GetNode(const NavGrid::FNode::ID ID); 
 	
 	static FVector RoundToGrid(const FVector& Value);
 	static FVector TruncToGrid(const FVector& Value);
@@ -39,9 +39,8 @@ public:
 	{
 		None,
 		Direct,
+		Cliff,
 		Slope,
-		CliffUp,
-		CliffDown
 	};
 
 	static FIntVector2 WorldToGridIndex(const FVector2f& WorldCoord);
@@ -57,7 +56,7 @@ private:
 
 	void PopulateMap(const UWorld& World, const FBox& BoundingBox);
 
-	NavigationMap::FAdjacencyList Map;
+	NavGrid::FAdjacencyList Map;
 
 	// TODO: make into customizable parameter; assume for now 100cm grid spacing
 	static constexpr float ASSUMED_GRID_SPACING = 100.0;

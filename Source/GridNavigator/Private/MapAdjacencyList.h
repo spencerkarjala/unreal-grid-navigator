@@ -3,7 +3,7 @@
 
 #include "MapAdjacencyListTypes.h"
 
-namespace NavigationMap
+namespace NavGrid
 {
 	class FAdjacencyList
 	{

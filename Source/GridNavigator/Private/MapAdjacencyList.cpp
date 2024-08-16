@@ -6,7 +6,7 @@
 
 DECLARE_LOG_CATEGORY_CLASS(LogMapAdjacencyList, Log, All)
 
-namespace NavigationMap
+namespace NavGrid
 {
 	bool FAdjacencyList::HasNode(const int QueryX, const int QueryY, const int QueryLayer) const
 	{
@@ -92,8 +92,7 @@ namespace NavigationMap
 				case Slope:       DebugLineColor = FColor(0,   255, 0);   break;
 				case SlopeBottom: DebugLineColor = FColor(255, 200, 0);   break;
 				case SlopeTop:    DebugLineColor = FColor(200, 255, 0);   break;
-				case CliffDown:
-				case CliffUp:     DebugLineColor = FColor(0,   0,   255); break;
+				case Cliff:       DebugLineColor = FColor(0,   0,   255); break;
 				default:          DebugLineColor = FColor(255, 0,   0);   break;
 				}
 

@@ -72,6 +72,9 @@ public:
 	 */
 	virtual int32 GetNumRunningBuildTasks() const override;
 
+protected:
+	FORCEINLINE UWorld* GetWorld() const { return IsValid(LinkedNavData) ? LinkedNavData->GetWorld() : nullptr; }
+
 private:
 	typedef FAsyncTask<FGNDataBuildTask> FGNAsyncBuildTask;
 	
