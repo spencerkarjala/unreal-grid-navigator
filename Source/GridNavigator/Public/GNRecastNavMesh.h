@@ -29,6 +29,8 @@ public:
 	UFUNCTION(CallInEditor, Category="Navigation", DisplayName="Rebuild Navigation")
 	void RebuildNavigation() const;
 
+	FString GetDataString() const;
+
 private:
 	static FPathFindingResult FindPath(const FNavAgentProperties& AgentProperties, const FPathFindingQuery& Query);
 

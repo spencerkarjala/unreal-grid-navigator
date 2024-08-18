@@ -72,6 +72,11 @@ void AGNRecastNavMesh::RebuildNavigation() const
 	HandleRebuildNavigation();
 }
 
+FString AGNRecastNavMesh::GetDataString() const
+{
+	return LevelData->ToString();
+}
+
 void AGNRecastNavMesh::HandleRebuildNavigation() const
 {
 	const auto* World = GetWorld();

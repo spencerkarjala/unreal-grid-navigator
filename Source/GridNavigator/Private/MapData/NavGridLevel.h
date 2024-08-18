@@ -48,6 +48,13 @@ namespace NavGrid
 		 */
 		FORCEINLINE void UpdateBlock(const uint32 ID, FBlock&& Block) { Blocks[ID] = Block; }
 
+		/**
+		 * @brief Retrieves a string that summarizes the data currently stored by the level.
+		 * 
+		 * @return A string summarizing the level's data content
+		 */
+		FString ToString() const;
+
 	private:
 		TMap<uint32, FBlock> Blocks;
 	};
