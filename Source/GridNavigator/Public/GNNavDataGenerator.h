@@ -1,5 +1,5 @@
 #pragma once
-#include "GNRecastNavMesh.h"
+#include "NavigationGridData.h"
 #include "AI/NavDataGenerator.h"
 
 class FGNDataBuildTask final : public FNonAbandonableTask
@@ -22,7 +22,7 @@ class GRIDNAVIGATOR_API FGNNavDataGenerator final : public FNavDataGenerator
 {
 public:
 	FGNNavDataGenerator();
-	explicit FGNNavDataGenerator(AGNRecastNavMesh* NavData);
+	explicit FGNNavDataGenerator(ANavigationGridData* NavData);
 
 	/**
 	 * @brief Triggers a full rebuild of all navigation data associated with this generator
@@ -78,6 +78,6 @@ protected:
 private:
 	typedef FAsyncTask<FGNDataBuildTask> FGNAsyncBuildTask;
 	
-	AGNRecastNavMesh* LinkedNavData = nullptr;
+	ANavigationGridData* LinkedNavData = nullptr;
 	TUniquePtr<FGNAsyncBuildTask> CurrentBuildTask = nullptr;
 };

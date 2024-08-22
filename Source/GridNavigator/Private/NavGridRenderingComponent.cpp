@@ -1,6 +1,6 @@
 #include "NavGridRenderingComponent.h"
 
-#include "GNRecastNavMesh.h"
+#include "NavigationGridData.h"
 #include "MappingServer.h"
 #include "NavGridSceneProxy.h"
 #include "NavMesh/NavMeshRenderingComponent.h"
@@ -66,7 +66,7 @@ FDebugRenderSceneProxy* UNavGridRenderingComponent::CreateDebugSceneProxy()
 		return nullptr;
 	}
 
-	const auto* NavGrid = Cast<AGNRecastNavMesh>(GetOwner());
+	const auto* NavGrid = Cast<ANavigationGridData>(GetOwner());
 	if (!IsValid(NavGrid) || !NavGrid->IsDrawingEnabled() || !IsVisible()) {
 		return nullptr;
 	}

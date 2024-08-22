@@ -15,7 +15,7 @@ void FGNDataBuildTask::DoWork()
 
 FGNNavDataGenerator::FGNNavDataGenerator() : LinkedNavData(nullptr) {}
 
-FGNNavDataGenerator::FGNNavDataGenerator(AGNRecastNavMesh* NavData) : LinkedNavData(NavData) {}
+FGNNavDataGenerator::FGNNavDataGenerator(ANavigationGridData* NavData) : LinkedNavData(NavData) {}
 
 bool FGNNavDataGenerator::RebuildAll()
 {

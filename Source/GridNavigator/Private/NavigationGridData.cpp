@@ -1,4 +1,4 @@
-#include "GNRecastNavMesh.h"
+#include "NavigationGridData.h"
 
 #include "NavigationData.h"
 #include "NavigationSystem.h"
@@ -13,24 +13,24 @@
 
 DECLARE_LOG_CATEGORY_CLASS(LogGNRecastNavMesh, Log, All);
 
-AGNRecastNavMesh::AGNRecastNavMesh(const FObjectInitializer& ObjectInitializer) : ARecastNavMesh(ObjectInitializer)
+ANavigationGridData::ANavigationGridData(const FObjectInitializer& ObjectInitializer) : ARecastNavMesh(ObjectInitializer)
 {
 	FindPathImplementation = this->FindPath;
 	LevelData = MakeShared<FNavGridLevel>();
 }
 
-void AGNRecastNavMesh::OnNavigationBoundsChanged()
+void ANavigationGridData::OnNavigationBoundsChanged()
 {
 	// Super::OnNavigationBoundsChanged();
 	HandleRebuildNavigation();
 }
 
-void AGNRecastNavMesh::RebuildDirtyAreas(const TArray<FNavigationDirtyArea>& DirtyAreas)
+void ANavigationGridData::RebuildDirtyAreas(const TArray<FNavigationDirtyArea>& DirtyAreas)
 {
 	Super::RebuildDirtyAreas(DirtyAreas);
 }
 
-UPrimitiveComponent* AGNRecastNavMesh::ConstructRenderingComponent()
+UPrimitiveComponent* ANavigationGridData::ConstructRenderingComponent()
 {
 	DebugRenderingComponent = NewObject<UNavGridRenderingComponent>(this, TEXT("NavGridRenderingComponent"), RF_Transient);
 	if (!DebugRenderingComponent) {
@@ -39,13 +39,13 @@ UPrimitiveComponent* AGNRecastNavMesh::ConstructRenderingComponent()
 	return DebugRenderingComponent.Get();
 }
 
-void AGNRecastNavMesh::Serialize(FArchive& Ar)
+void ANavigationGridData::Serialize(FArchive& Ar)
 {
 	Super::Serialize(Ar);
 	FMappingServer::GetInstance().Serialize(Ar);
 }
 
-void AGNRecastNavMesh::ConditionalConstructGenerator()
+void ANavigationGridData::ConditionalConstructGenerator()
 {
 	if (NavDataGenerator.IsValid()) {
 		NavDataGenerator->CancelBuild();
@@ -67,17 +67,17 @@ void AGNRecastNavMesh::ConditionalConstructGenerator()
 	NavDataGenerator = MakeShareable(static_cast<FNavDataGenerator*>(Generator));
 }
 
-void AGNRecastNavMesh::RebuildNavigation() const
+void ANavigationGridData::RebuildNavigation() const
 {
 	HandleRebuildNavigation();
 }
 
-FString AGNRecastNavMesh::GetDataString() const
+FString ANavigationGridData::GetDataString() const
 {
 	return LevelData->ToString();
 }
 
-void AGNRecastNavMesh::HandleRebuildNavigation() const
+void ANavigationGridData::HandleRebuildNavigation() const
 {
 	const auto* World = GetWorld();
 	if (!IsValid(World)) {
@@ -149,7 +149,7 @@ namespace std {
     };
 }
 
-FPathFindingResult AGNRecastNavMesh::FindPath(const FNavAgentProperties& AgentProperties, const FPathFindingQuery& Query)
+FPathFindingResult ANavigationGridData::FindPath(const FNavAgentProperties& AgentProperties, const FPathFindingQuery& Query)
 {
 	DECLARE_CYCLE_STAT(TEXT("Grid Pathfinding"), STAT_Navigation_GridPathfinding, STATGROUP_Navigation);
 	SCOPE_CYCLE_COUNTER(STAT_Navigation_GridPathfinding);

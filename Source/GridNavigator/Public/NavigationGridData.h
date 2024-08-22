@@ -4,20 +4,20 @@
 #include "NavMesh/RecastNavMesh.h"
 #include "MapData/NavGridLevel.h"
 #include "NavGridRenderingComponent.h"
-#include "GNRecastNavMesh.generated.h"
+#include "NavigationGridData.generated.h"
 
 // forward declare private module class
 namespace NavGrid { class FLevel; }
 
 UCLASS()
-class GRIDNAVIGATOR_API AGNRecastNavMesh : public ARecastNavMesh
+class GRIDNAVIGATOR_API ANavigationGridData : public ARecastNavMesh
 {
 	GENERATED_BODY()
 
 	friend class FGNNavDataGenerator;
 	
 public:
-	AGNRecastNavMesh(const FObjectInitializer& ObjectInitializer);
+	ANavigationGridData(const FObjectInitializer& ObjectInitializer);
 
 	virtual void OnNavigationBoundsChanged() override;
 	virtual void RebuildDirtyAreas(const TArray<FNavigationDirtyArea>& DirtyAreas) override;
