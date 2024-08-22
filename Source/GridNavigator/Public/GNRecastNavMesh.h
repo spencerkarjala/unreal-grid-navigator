@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "NavMesh/RecastNavMesh.h"
+#include "MapData/NavGridLevel.h"
 #include "NavGridRenderingComponent.h"
 #include "GNRecastNavMesh.generated.h"
 
@@ -39,5 +40,5 @@ private:
 
 	void HandleRebuildNavigation() const;
 
-	TSharedPtr<NavGrid::FLevel> LevelData = nullptr;
+	TSharedPtr<FNavGridLevel> LevelData = nullptr;
 };

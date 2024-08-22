@@ -1,7 +1,4 @@
-#include "NavGridBlock.h"
+#include "MapData/NavGridBlock.h"
 
-namespace NavGrid
-{
-	FBlock::FBlock() {}
-	FBlock::FBlock(const FBox& NewBounds) : Bounds(NewBounds) {}
-}
+FNavGridBlock::FNavGridBlock() {}
+FNavGridBlock::FNavGridBlock(const FBox& NewBounds) : Bounds(NewBounds) {}

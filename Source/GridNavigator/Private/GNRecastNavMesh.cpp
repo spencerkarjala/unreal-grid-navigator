@@ -16,7 +16,7 @@ DECLARE_LOG_CATEGORY_CLASS(LogGNRecastNavMesh, Log, All);
 AGNRecastNavMesh::AGNRecastNavMesh(const FObjectInitializer& ObjectInitializer) : ARecastNavMesh(ObjectInitializer)
 {
 	FindPathImplementation = this->FindPath;
-	LevelData = MakeShared<NavGrid::FLevel>();
+	LevelData = MakeShared<FNavGridLevel>();
 }
 
 void AGNRecastNavMesh::OnNavigationBoundsChanged()
