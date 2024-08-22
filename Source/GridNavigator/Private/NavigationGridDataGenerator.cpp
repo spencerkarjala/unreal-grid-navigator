@@ -1,4 +1,4 @@
-#include "GNNavDataGenerator.h"
+#include "NavigationGridDataGenerator.h"
 
 #include "NavigationSystem.h"
 #include "AI/NavigationSystemBase.h"
@@ -13,11 +13,11 @@ void FGNDataBuildTask::DoWork()
 	UE_LOG(LogGNNavDataGenerator, Warning, TEXT("Work completed on FGNDataBuildTask; game time: %0.2f"), FPlatformTime::Seconds());
 }
 
-FGNNavDataGenerator::FGNNavDataGenerator() : LinkedNavData(nullptr) {}
+FNavigationGridDataGenerator::FNavigationGridDataGenerator() : LinkedNavData(nullptr) {}
 
-FGNNavDataGenerator::FGNNavDataGenerator(ANavigationGridData* NavData) : LinkedNavData(NavData) {}
+FNavigationGridDataGenerator::FNavigationGridDataGenerator(ANavigationGridData* NavData) : LinkedNavData(NavData) {}
 
-bool FGNNavDataGenerator::RebuildAll()
+bool FNavigationGridDataGenerator::RebuildAll()
 {
 	if (CurrentBuildTask.IsValid()) {
 		CurrentBuildTask->EnsureCompletion();
@@ -30,7 +30,7 @@ bool FGNNavDataGenerator::RebuildAll()
 	return true;
 }
 
-void FGNNavDataGenerator::EnsureBuildCompletion()
+void FNavigationGridDataGenerator::EnsureBuildCompletion()
 {
 	if (!CurrentBuildTask) {
 		return;
@@ -39,14 +39,14 @@ void FGNNavDataGenerator::EnsureBuildCompletion()
 	CurrentBuildTask->EnsureCompletion();
 }
 
-void FGNNavDataGenerator::CancelBuild() {}
+void FNavigationGridDataGenerator::CancelBuild() {}
 
-void FGNNavDataGenerator::OnNavigationBoundsChanged()
+void FNavigationGridDataGenerator::OnNavigationBoundsChanged()
 {
 	RebuildAll();
 }
 
-void FGNNavDataGenerator::RebuildDirtyAreas(const TArray<FNavigationDirtyArea>& DirtyAreas)
+void FNavigationGridDataGenerator::RebuildDirtyAreas(const TArray<FNavigationDirtyArea>& DirtyAreas)
 {
 	if (!LinkedNavData) {
 		UE_LOG(LogGNNavDataGenerator, Error, TEXT("Tried to RebuildDirtyAreas without a linked ANavigationData instance"));
@@ -102,17 +102,17 @@ void FGNNavDataGenerator::RebuildDirtyAreas(const TArray<FNavigationDirtyArea>& 
 	RebuildAll();
 }
 
-bool FGNNavDataGenerator::IsBuildInProgressCheckDirty() const
+bool FNavigationGridDataGenerator::IsBuildInProgressCheckDirty() const
 {
 	return FNavDataGenerator::IsBuildInProgressCheckDirty();
 }
 
-int32 FGNNavDataGenerator::GetNumRemaningBuildTasks() const
+int32 FNavigationGridDataGenerator::GetNumRemaningBuildTasks() const
 {
 	return CurrentBuildTask.IsValid() && CurrentBuildTask->IsIdle() ? 1 : 0;
 }
 
-int32 FGNNavDataGenerator::GetNumRunningBuildTasks() const
+int32 FNavigationGridDataGenerator::GetNumRunningBuildTasks() const
 {
 	return CurrentBuildTask.IsValid() && !CurrentBuildTask->IsWorkDone() ? 1 : 0;
 }

@@ -18,11 +18,11 @@ public:
 	void DoWork();
 };
 
-class GRIDNAVIGATOR_API FGNNavDataGenerator final : public FNavDataGenerator
+class GRIDNAVIGATOR_API FNavigationGridDataGenerator final : public FNavDataGenerator
 {
 public:
-	FGNNavDataGenerator();
-	explicit FGNNavDataGenerator(ANavigationGridData* NavData);
+	FNavigationGridDataGenerator();
+	explicit FNavigationGridDataGenerator(ANavigationGridData* NavData);
 
 	/**
 	 * @brief Triggers a full rebuild of all navigation data associated with this generator

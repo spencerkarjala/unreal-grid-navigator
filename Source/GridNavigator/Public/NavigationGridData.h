@@ -14,7 +14,7 @@ class GRIDNAVIGATOR_API ANavigationGridData : public ARecastNavMesh
 {
 	GENERATED_BODY()
 
-	friend class FGNNavDataGenerator;
+	friend class FNavigationGridDataGenerator;
 	
 public:
 	ANavigationGridData(const FObjectInitializer& ObjectInitializer);

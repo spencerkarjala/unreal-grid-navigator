@@ -8,7 +8,7 @@
 #include "NavGridRenderingComponent.h"
 #include "MappingServer.h"
 #include "NavMesh/PImplRecastNavMesh.h"
-#include "GNNavDataGenerator.h"
+#include "NavigationGridDataGenerator.h"
 #include "MapData/NavGridLevel.h"
 
 DECLARE_LOG_CATEGORY_CLASS(LogGNRecastNavMesh, Log, All);
@@ -59,7 +59,7 @@ void ANavigationGridData::ConditionalConstructGenerator()
 		return;
 	}
 	
-	FGNNavDataGenerator* Generator = new FGNNavDataGenerator(this);
+	FNavigationGridDataGenerator* Generator = new FNavigationGridDataGenerator(this);
 	if (Generator == nullptr) {
 		UE_LOG(LogGNRecastNavMesh, Error, TEXT("Failed to instantiate new GNNavDataGenerator"));
 		return;
