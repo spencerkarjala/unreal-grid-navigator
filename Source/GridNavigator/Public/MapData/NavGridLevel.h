@@ -41,7 +41,7 @@ struct FNavGridLevel
 	 * @param ID UniqueID (from FNavigationBounds) that identifies the block/nav bound
 	 * @param Block New block data associated with UniqueID
 	 */
-	FORCEINLINE void AddBlock(const uint32 ID, FNavGridBlock&& Block) { Blocks[ID] = Block; }
+	FORCEINLINE void AddBlock(const uint32 ID, FNavGridBlock&& Block) { Blocks.Add(ID, Block); }
 
 	/**
 	 * @brief Updates the data for a navigation block associated with a particular ID.
