@@ -77,6 +77,11 @@ FString ANavigationGridData::GetDataString() const
 	return LevelData->ToString();
 }
 
+void ANavigationGridData::UpdateBlockData(const uint32 BlockID, const FBox& NewBoundData) const
+{
+	LevelData->UpdateBlock(BlockID, FNavGridBlock(NewBoundData));
+}
+
 void ANavigationGridData::HandleRebuildNavigation() const
 {
 	const auto* World = GetWorld();

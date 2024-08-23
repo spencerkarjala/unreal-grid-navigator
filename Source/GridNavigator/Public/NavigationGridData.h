@@ -6,8 +6,7 @@
 #include "NavGridRenderingComponent.h"
 #include "NavigationGridData.generated.h"
 
-// forward declare private module class
-namespace NavGrid { class FLevel; }
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FNavigationDataBlockUpdatedDelegate, uint32, ID, const FBox&, Bounds);
 
 UCLASS()
 class GRIDNAVIGATOR_API ANavigationGridData : public ARecastNavMesh
@@ -31,6 +30,11 @@ public:
 	void RebuildNavigation() const;
 
 	FString GetDataString() const;
+
+	FORCEINLINE void UpdateBlockData(const uint32 BlockID, const FBox& NewBoundData) const;
+
+	UPROPERTY(BlueprintAssignable, Category = "Navigation")
+	FNavigationDataBlockUpdatedDelegate OnNavigationDataBlockUpdated;
 
 private:
 	static FPathFindingResult FindPath(const FNavAgentProperties& AgentProperties, const FPathFindingQuery& Query);
