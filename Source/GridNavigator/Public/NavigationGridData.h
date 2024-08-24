@@ -31,7 +31,10 @@ public:
 
 	FString GetDataString() const;
 
-	FORCEINLINE void UpdateBlockData(const uint32 BlockID, const FBox& NewBoundData) const;
+	FORCEINLINE void UpdateBlockData(const uint32 BlockID, const FBox& NewBoundData);
+
+	UFUNCTION(BlueprintPure, Category = "Navigation")
+	TArray<FNavGridBlock> GetNavigationBlocks() const;
 
 	UPROPERTY(BlueprintAssignable, Category = "Navigation")
 	FNavigationDataBlockUpdatedDelegate OnNavigationDataBlockUpdated;

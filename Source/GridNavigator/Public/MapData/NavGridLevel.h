@@ -4,7 +4,7 @@
 #include "CoreMinimal.h"
 #include "NavGridLevel.generated.h"
 
-USTRUCT()
+USTRUCT(Blueprintable, BlueprintType)
 struct FNavGridLevel
 {
 	GENERATED_BODY()
@@ -24,6 +24,20 @@ struct FNavGridLevel
 	 * @return The \c FNavGridBlock associated with ID
 	 */
 	FORCEINLINE FNavGridBlock const* GetBlock(const uint32 ID) const { return Blocks.Find(ID); }
+
+	/**
+	 * @brief Returns all of the currently-stored navigation data blocks.
+	 * 
+	 * @return An array with all of the current navigation data blocks
+	 */
+	FORCEINLINE TArray<FNavGridBlock> GetBlocks() const
+	{
+		TArray<FNavGridBlock> Result;
+		for (const auto [ID, Block] : Blocks) {
+			Result.Push(Block);
+		}
+		return Result;
+	}
 
 	/**
 	 * @brief Returns a navigation block associated with a particular ID.

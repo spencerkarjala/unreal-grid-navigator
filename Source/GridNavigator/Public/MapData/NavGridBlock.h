@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "NavGridBlock.generated.h"
 
-USTRUCT()
+USTRUCT(Blueprintable, BlueprintType)
 struct FNavGridBlock
 {
 	GENERATED_BODY()

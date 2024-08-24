@@ -77,9 +77,15 @@ FString ANavigationGridData::GetDataString() const
 	return LevelData->ToString();
 }
 
-void ANavigationGridData::UpdateBlockData(const uint32 BlockID, const FBox& NewBoundData) const
+// ReSharper disable once CppMemberFunctionMayBeConst
+void ANavigationGridData::UpdateBlockData(const uint32 BlockID, const FBox& NewBoundData)
 {
 	LevelData->UpdateBlock(BlockID, FNavGridBlock(NewBoundData));
+}
+
+TArray<FNavGridBlock> ANavigationGridData::GetNavigationBlocks() const
+{
+	return LevelData->GetBlocks();
 }
 
 void ANavigationGridData::HandleRebuildNavigation() const
