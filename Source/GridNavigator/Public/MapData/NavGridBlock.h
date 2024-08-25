@@ -11,5 +11,6 @@ struct FNavGridBlock
 	FNavGridBlock();
 	explicit FNavGridBlock(const FBox& NewBounds);
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FBox Bounds;
 };
