@@ -5,17 +5,15 @@
 class FGNDataBuildTask final : public FNonAbandonableTask
 {
 public:
-	TStatId GetStatId() const
-	{
-		RETURN_QUICK_DECLARE_CYCLE_STAT(GNDataBuildTask, STATGROUP_ThreadPoolAsyncTasks);
-	}
+	FGNDataBuildTask(UWorld* World);
+	
+	TStatId GetStatId() const;
+	FORCEINLINE bool CanAbandon() const;
 
-	FORCEINLINE bool CanAbandon() const
-	{
-		return false;
-	}
+	void DoWork() const;
 
-	void DoWork();
+private:
+	TObjectPtr<UWorld> WorldRef;
 };
 
 class GRIDNAVIGATOR_API FNavigationGridDataGenerator final : public FNavDataGenerator

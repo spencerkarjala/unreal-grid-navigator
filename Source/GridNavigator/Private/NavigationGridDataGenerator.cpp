@@ -6,7 +6,19 @@
 
 DECLARE_LOG_CATEGORY_CLASS(LogGNNavDataGenerator, Log, All);
 
-void FGNDataBuildTask::DoWork()
+FGNDataBuildTask::FGNDataBuildTask(UWorld* World) : WorldRef(World) {}
+
+TStatId FGNDataBuildTask::GetStatId() const 
+{
+	RETURN_QUICK_DECLARE_CYCLE_STAT(GNDataBuildTask, STATGROUP_ThreadPoolAsyncTasks);
+}
+
+bool FGNDataBuildTask::CanAbandon() const 
+{
+	return false;
+}
+
+void FGNDataBuildTask::DoWork() const
 {
 	UE_LOG(LogGNNavDataGenerator, Warning, TEXT("Starting work on FGNDataBuildTask; game time: %0.2f"), FPlatformTime::Seconds());
 	FPlatformProcess::Sleep(2.f);
@@ -23,7 +35,7 @@ bool FNavigationGridDataGenerator::RebuildAll()
 		CurrentBuildTask->EnsureCompletion();
 	}
 
-	CurrentBuildTask = MakeUnique<FGNAsyncBuildTask>(FGNDataBuildTask());
+	CurrentBuildTask = MakeUnique<FGNAsyncBuildTask>(FGNDataBuildTask(GetWorld()));
 	check(CurrentBuildTask.IsValid());
 	CurrentBuildTask->StartBackgroundTask();
 
@@ -43,7 +55,7 @@ void FNavigationGridDataGenerator::CancelBuild() {}
 
 void FNavigationGridDataGenerator::OnNavigationBoundsChanged()
 {
-	RebuildAll();
+	// RebuildAll();
 }
 
 void FNavigationGridDataGenerator::RebuildDirtyAreas(const TArray<FNavigationDirtyArea>& DirtyAreas)
