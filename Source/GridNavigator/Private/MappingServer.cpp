@@ -6,7 +6,7 @@
 #include "Engine/World.h"
 #include "MapData/NavGridAdjacencyListTypes.h"
 
-bool FloorTrace(const float I, const float J, const float MaxZ, const float MinZ, FHitResult& HitResult, const UWorld& World)
+bool FloorTrace2(const float I, const float J, const float MaxZ, const float MinZ, FHitResult& HitResult, const UWorld& World)
 {
 	const FVector2f GridIndex(I, J);
 	const FVector2f WorldCoordXY = FMappingServer::GridIndexToWorld(GridIndex);
@@ -18,7 +18,7 @@ bool FloorTrace(const float I, const float J, const float MaxZ, const float MinZ
 	return World.LineTraceSingleByObjectType(HitResult, WorldLocationTraceStart, WorldLocationTraceEnd, ECC_WorldStatic);
 }
 
-bool SubGridFloorTrace(const int I, const int J, const float MaxZ, const float MinZ, const FIntVector2 Direction, const float Alpha, FHitResult& HitResult, const UWorld& World)
+bool SubGridFloorTrace2(const int I, const int J, const float MaxZ, const float MinZ, const FIntVector2 Direction, const float Alpha, FHitResult& HitResult, const UWorld& World)
 {
 	const FVector2f GridIndex(I, J);
 	const FVector2f WorldCoordXY = FMappingServer::SubGridIndexToWorld(GridIndex, Direction, Alpha);
@@ -30,7 +30,7 @@ bool SubGridFloorTrace(const int I, const int J, const float MaxZ, const float M
 	return World.LineTraceSingleByObjectType(HitResult, WorldLocationTraceStart, WorldLocationTraceEnd, ECC_WorldStatic);
 }
 
-bool IsRoughlyEqual(const float Lhs, const float Rhs, const float Tolerance)
+bool IsRoughlyEqual2(const float Lhs, const float Rhs, const float Tolerance)
 {
 	return FMath::Abs(Lhs - Rhs) < Tolerance;
 }
@@ -258,7 +258,7 @@ void FMappingServer::PopulateMap(const UWorld& World, const FBox& BoundingBox)
 	for (int i = MinX; i <= MaxX; ++i) {
 		for (int j = MinY; j <= MaxY; ++j) {
 			FHitResult HitResult(ForceInit);
-			const bool NodeIJExists = FloorTrace(i, j, MaxZ, MinZ, HitResult, World);
+			const bool NodeIJExists = FloorTrace2(i, j, MaxZ, MinZ, HitResult, World);
 			
 			if (!NodeIJExists) {
 				continue;
@@ -266,7 +266,7 @@ void FMappingServer::PopulateMap(const UWorld& World, const FBox& BoundingBox)
 
 			FHitResult CeilHitResult(ForceInit);
 			const int Layer = FMath::RoundToInt(HitResult.Location.Z / 25.0);
-			const bool bShortRoofOverHitPoint = FloorTrace(i, j, Layer, Layer + GridNavigatorConfig::MinEmptyLayersForValidNode, CeilHitResult, World);
+			const bool bShortRoofOverHitPoint = FloorTrace2(i, j, Layer, Layer + GridNavigatorConfig::MinEmptyLayersForValidNode, CeilHitResult, World);
 
 			// end loop if there's nowhere to stand; also, ignore walls that might be directly
 			// on top of the node (ie. have a near-zero Z component for normal vector)
@@ -279,7 +279,7 @@ void FMappingServer::PopulateMap(const UWorld& World, const FBox& BoundingBox)
 			for (const auto& [NeighborI, NeighborJ] : Neighbors) {
 				FHitResult NeighborHitResult(ForceInit);
 				FIntVector3 NeighborIndex(i + NeighborI, j + NeighborJ, 0);
-				const bool NeighborNodeExists = FloorTrace(NeighborIndex.X, NeighborIndex.Y, MaxZ, MinZ, NeighborHitResult, World);
+				const bool NeighborNodeExists = FloorTrace2(NeighborIndex.X, NeighborIndex.Y, MaxZ, MinZ, NeighborHitResult, World);
 			
 				if (!NeighborNodeExists) {
 					continue;
@@ -345,10 +345,10 @@ void FMappingServer::PopulateMap(const UWorld& World, const FBox& BoundingBox)
 					const FIntVector2 NeighborDir(NeighborI, NeighborJ);
 					
 					FHitResult NodeSideSubGridHitResult;
-					bool NodeSideSubGridFloorExists = SubGridFloorTrace(i, j, MaxZ, MinZ, NeighborDir, 0.2, NodeSideSubGridHitResult, World);
+					bool NodeSideSubGridFloorExists = SubGridFloorTrace2(i, j, MaxZ, MinZ, NeighborDir, 0.2, NodeSideSubGridHitResult, World);
 
 					FHitResult NeighborSideSubGridHitResult;
-					bool NeighborSideSubGridFloorExists = SubGridFloorTrace(i, j, MaxZ, MinZ, NeighborDir, 0.8, NeighborSideSubGridHitResult, World);
+					bool NeighborSideSubGridFloorExists = SubGridFloorTrace2(i, j, MaxZ, MinZ, NeighborDir, 0.8, NeighborSideSubGridHitResult, World);
 
 					if (NodeSideSubGridFloorExists && NeighborSideSubGridFloorExists) {
 						const FVector& NodeSideSubGridLocation     = NodeSideSubGridHitResult.Location;
@@ -374,7 +374,7 @@ void FMappingServer::PopulateMap(const UWorld& World, const FBox& BoundingBox)
 					const FVector2f Midpoint = (PointA + PointB) / 2.0;
 
 					FHitResult MidpointHitResult;
-					const bool DidMidpointTraceHit = FloorTrace(Midpoint.X, Midpoint.Y, MaxZ, MinZ, MidpointHitResult, World);
+					const bool DidMidpointTraceHit = FloorTrace2(Midpoint.X, Midpoint.Y, MaxZ, MinZ, MidpointHitResult, World);
 
 					// tracing between two valid navmesh points should never fail (ie. no gaps)
 					check(DidMidpointTraceHit);
@@ -382,11 +382,11 @@ void FMappingServer::PopulateMap(const UWorld& World, const FBox& BoundingBox)
 					const float MidpointHeight = MidpointHitResult.Location.Z;
 					const float AverageHeight = (NodeHeight + NeighborHeight) / 2.f;
 
-					const bool IsMiddleOfSlope = IsRoughlyEqual(MidpointHeight, AverageHeight, 1.0);
+					const bool IsMiddleOfSlope = IsRoughlyEqual2(MidpointHeight, AverageHeight, 1.0);
 
 					// if current edge is starting or ending slope, then update its edge type to match that
 					if (!IsMiddleOfSlope) {
-						const bool NodeIsFlatSide     = IsRoughlyEqual(NodeHeight, MidpointHeight, 1.0);
+						const bool NodeIsFlatSide     = IsRoughlyEqual2(NodeHeight, MidpointHeight, 1.0);
 						const bool NeighborIsFlatSide = !NodeIsFlatSide;
 						const bool NodeIsLowerSide     = NodeHeight < NeighborHeight;
 						const bool NeighborIsLowerSide = !NodeIsLowerSide;

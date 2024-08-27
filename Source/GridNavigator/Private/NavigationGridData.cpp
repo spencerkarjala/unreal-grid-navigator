@@ -109,57 +109,6 @@ void ANavigationGridData::HandleRebuildNavigation() const
 	}
 }
 
-struct Point {
-	int x, y;
-
-	Point(int _x, int _y)
-	{
-		this->x = _x;
-		this->y = _y;
-	}
-
-	Point(float _x, float _y)
-	{
-		this->x = round(_x);
-		this->y = round(_y);
-	}
-
-	Point(double _x, double _y)
-	{
-		this->x = round(_x);
-		this->y = round(_y);
-	}
-
-	explicit Point(const FVector& rhs)
-	{
-		this->x = round(rhs.X);
-		this->y = round(rhs.Y);
-	}
-	
-	const Point& operator=(const FVector& rhs) const
-	{
-		return Point(rhs);
-	}
-    
-    bool operator==(const Point& other) const {
-        return x == other.x && y == other.y;
-    }
-    
-    // Euclidean distance for heuristic
-    double DistanceTo(const Point& other) const {
-        return std::hypot(x - other.x, y - other.y);
-    }
-};
-
-namespace std {
-    template <>
-    struct hash<Point> {
-        size_t operator()(const Point& p) const {
-            return hash<int>()(p.x) ^ hash<int>()(p.y);
-        }
-    };
-}
-
 FPathFindingResult ANavigationGridData::FindPath(const FNavAgentProperties& AgentProperties, const FPathFindingQuery& Query)
 {
 	DECLARE_CYCLE_STAT(TEXT("Grid Pathfinding"), STAT_Navigation_GridPathfinding, STATGROUP_Navigation);

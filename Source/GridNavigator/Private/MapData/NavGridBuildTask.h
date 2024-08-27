@@ -10,6 +10,7 @@ public:
 	FORCEINLINE bool CanAbandon() const;
 
 	void DoWork() const;
+	static void PopulateBlock(const UWorld& World, FNavGridBlock& Block);
 
 private:
 	TObjectPtr<UWorld> WorldRef;
