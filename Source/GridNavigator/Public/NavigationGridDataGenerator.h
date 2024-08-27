@@ -1,20 +1,8 @@
 #pragma once
+
 #include "NavigationGridData.h"
+#include "MapData/NavGridBuildTask.h"
 #include "AI/NavDataGenerator.h"
-
-class FGNDataBuildTask final : public FNonAbandonableTask
-{
-public:
-	FGNDataBuildTask(UWorld* World);
-	
-	TStatId GetStatId() const;
-	FORCEINLINE bool CanAbandon() const;
-
-	void DoWork() const;
-
-private:
-	TObjectPtr<UWorld> WorldRef;
-};
 
 class GRIDNAVIGATOR_API FNavigationGridDataGenerator final : public FNavDataGenerator
 {
@@ -74,7 +62,7 @@ protected:
 	FORCEINLINE UWorld* GetWorld() const { return IsValid(LinkedNavData) ? LinkedNavData->GetWorld() : nullptr; }
 
 private:
-	typedef FAsyncTask<FGNDataBuildTask> FGNAsyncBuildTask;
+	typedef FAsyncTask<FNavGridBuildTask> FGNAsyncBuildTask;
 	
 	ANavigationGridData* LinkedNavData = nullptr;
 	TUniquePtr<FGNAsyncBuildTask> CurrentBuildTask = nullptr;

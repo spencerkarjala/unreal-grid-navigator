@@ -6,26 +6,7 @@
 
 DECLARE_LOG_CATEGORY_CLASS(LogGNNavDataGenerator, Log, All);
 
-FGNDataBuildTask::FGNDataBuildTask(UWorld* World) : WorldRef(World) {}
-
-TStatId FGNDataBuildTask::GetStatId() const 
-{
-	RETURN_QUICK_DECLARE_CYCLE_STAT(GNDataBuildTask, STATGROUP_ThreadPoolAsyncTasks);
-}
-
-bool FGNDataBuildTask::CanAbandon() const 
-{
-	return false;
-}
-
-void FGNDataBuildTask::DoWork() const
-{
-	UE_LOG(LogGNNavDataGenerator, Warning, TEXT("Starting work on FGNDataBuildTask; game time: %0.2f"), FPlatformTime::Seconds());
-	FPlatformProcess::Sleep(2.f);
-	UE_LOG(LogGNNavDataGenerator, Warning, TEXT("Work completed on FGNDataBuildTask; game time: %0.2f"), FPlatformTime::Seconds());
-}
-
-FNavigationGridDataGenerator::FNavigationGridDataGenerator() : LinkedNavData(nullptr) {}
+FNavigationGridDataGenerator::FNavigationGridDataGenerator() {}
 
 FNavigationGridDataGenerator::FNavigationGridDataGenerator(ANavigationGridData* NavData) : LinkedNavData(NavData) {}
 
@@ -35,7 +16,7 @@ bool FNavigationGridDataGenerator::RebuildAll()
 		CurrentBuildTask->EnsureCompletion();
 	}
 
-	CurrentBuildTask = MakeUnique<FGNAsyncBuildTask>(FGNDataBuildTask(GetWorld()));
+	CurrentBuildTask = MakeUnique<FGNAsyncBuildTask>(FNavGridBuildTask(GetWorld(), LinkedNavData));
 	check(CurrentBuildTask.IsValid());
 	CurrentBuildTask->StartBackgroundTask();
 
@@ -101,15 +82,15 @@ void FNavigationGridDataGenerator::RebuildDirtyAreas(const TArray<FNavigationDir
 		}
 	}
 	
-	FString AreasString("\r\n");
-	for (const auto& DirtyArea : DirtyAreas) {
-		AreasString += DirtyArea.Bounds.ToString() + "\r\n";
-	}
-	AreasString += "aaa \r\n";
-	for (const auto& Area : NavSys->GetNavigationBounds()) {
-		AreasString += Area.AreaBox.ToString() + "\r\n";
-	}
-	UE_LOG(LogGNNavDataGenerator, Log, TEXT("Got RebuildDirtyAreas for: '%s'"), *AreasString);
+	// FString AreasString("\r\n");
+	// for (const auto& DirtyArea : DirtyAreas) {
+	// 	AreasString += DirtyArea.Bounds.ToString() + "\r\n";
+	// }
+	// AreasString += "aaa \r\n";
+	// for (const auto& Area : NavSys->GetNavigationBounds()) {
+	// 	AreasString += Area.AreaBox.ToString() + "\r\n";
+	// }
+	// UE_LOG(LogGNNavDataGenerator, Log, TEXT("Got RebuildDirtyAreas for: '%s'"), *AreasString);
 	
 	RebuildAll();
 }
