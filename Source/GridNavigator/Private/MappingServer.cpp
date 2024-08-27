@@ -4,6 +4,7 @@
 
 #include "GridNavigatorConfig.h"
 #include "Engine/World.h"
+#include "MapData/NavGridAdjacencyListTypes.h"
 
 bool FloorTrace(const float I, const float J, const float MaxZ, const float MinZ, FHitResult& HitResult, const UWorld& World)
 {

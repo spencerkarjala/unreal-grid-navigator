@@ -1,4 +1,4 @@
-#include "MapAdjacencyListTypes.h"
+#include "NavGridAdjacencyListTypes.h"
 
 namespace NavGrid
 {

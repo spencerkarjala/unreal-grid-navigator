@@ -2,7 +2,7 @@
 
 #include <optional>
 
-#include "MapAdjacencyList.h"
+#include "MapData/NavGridAdjacencyList.h"
 
 class UWorld;
 
@@ -56,7 +56,7 @@ private:
 
 	void PopulateMap(const UWorld& World, const FBox& BoundingBox);
 
-	NavGrid::FAdjacencyList Map;
+	FNavGridAdjacencyList Map;
 
 	// TODO: make into customizable parameter; assume for now 100cm grid spacing
 	static constexpr float ASSUMED_GRID_SPACING = 100.0;
