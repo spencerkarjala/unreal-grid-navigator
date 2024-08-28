@@ -72,6 +72,9 @@ struct FNavGridLevel
 	 */
 	FString ToString() const;
 
-private:
+	TArray<FVector> FindPath(const FVector& From, const FVector& To);
+
+	void GetBlockDataBlueprint(TArray<uint32>& IDs, TArray<FNavGridBlock> Blocks);
+
 	TMap<uint32, FNavGridBlock> Blocks;
 };

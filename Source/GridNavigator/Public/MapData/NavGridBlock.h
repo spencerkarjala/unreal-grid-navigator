@@ -9,8 +9,8 @@ struct FNavGridBlock
 {
 	GENERATED_BODY()
 	
-	FNavGridBlock();
-	explicit FNavGridBlock(const FBox& NewBounds);
+	FNavGridBlock() {}
+	explicit FNavGridBlock(const FBox& NewBounds) : Bounds(NewBounds) {}
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FBox Bounds;

@@ -1,5 +1,13 @@
 #include "MapData/NavGridLevel.h"
 
+#include "MapData/NavGridDataSerializer.h"
+
+#include <sstream>
+
+#include "GridNavigatorConfig.h"
+
+DECLARE_LOG_CATEGORY_CLASS(LogNavGridLevel, Log, All);
+
 FString FNavGridLevel::ToString() const
 {
 	std::stringstream SStream;
@@ -14,4 +22,28 @@ FString FNavGridLevel::ToString() const
 
 	FString Result(SStream.str().c_str());
 	return Result;
+}
+
+TArray<FVector> FNavGridLevel::FindPath(const FVector& From, const FVector& To)
+{
+	UE_LOG(LogNavGridLevel, Log, TEXT("Level got FindPath from '%s' to '%s'"), *From.ToString(), *To.ToString());
+	if (Blocks.Num() == 0) {
+		return {};
+	}
+
+	FNavGridBlock* StartBlock = nullptr;
+	for (auto& [ID, Block] : Blocks) {
+		if (Block.Bounds.IsInsideOrOn(From)) {
+			StartBlock = &Block;
+		}
+	}
+	
+	if (StartBlock == nullptr) {
+		return {};
+	}
+
+	const FIntVector3 FromIndex = GridNavigatorConfig::WorldToGridIndex(From);
+	const FIntVector3 ToIndex   = GridNavigatorConfig::WorldToGridIndex(To);
+
+	return StartBlock->Data.FindPath(FromIndex, ToIndex);
 }

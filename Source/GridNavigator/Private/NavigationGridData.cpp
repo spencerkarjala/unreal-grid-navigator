@@ -9,9 +9,10 @@
 #include "MappingServer.h"
 #include "NavMesh/PImplRecastNavMesh.h"
 #include "NavigationGridDataGenerator.h"
+#include "MapData/NavGridDataSerializer.h"
 #include "MapData/NavGridLevel.h"
 
-DECLARE_LOG_CATEGORY_CLASS(LogGNRecastNavMesh, Log, All);
+DECLARE_LOG_CATEGORY_CLASS(LogNavigationGridData, Log, All);
 
 ANavigationGridData::ANavigationGridData(const FObjectInitializer& ObjectInitializer) : ARecastNavMesh(ObjectInitializer)
 {
@@ -42,7 +43,7 @@ UPrimitiveComponent* ANavigationGridData::ConstructRenderingComponent()
 void ANavigationGridData::Serialize(FArchive& Ar)
 {
 	Super::Serialize(Ar);
-	FMappingServer::GetInstance().Serialize(Ar);
+	FNavGridDataSerializer::Serialize(Ar, this);
 }
 
 void ANavigationGridData::ConditionalConstructGenerator()
@@ -61,7 +62,7 @@ void ANavigationGridData::ConditionalConstructGenerator()
 	
 	FNavigationGridDataGenerator* Generator = new FNavigationGridDataGenerator(this);
 	if (Generator == nullptr) {
-		UE_LOG(LogGNRecastNavMesh, Error, TEXT("Failed to instantiate new GNNavDataGenerator"));
+		UE_LOG(LogNavigationGridData, Error, TEXT("Failed to instantiate new GNNavDataGenerator"));
 		return;
 	}
 	NavDataGenerator = MakeShareable(static_cast<FNavDataGenerator*>(Generator));
@@ -83,9 +84,19 @@ void ANavigationGridData::UpdateBlockData(const uint32 BlockID, const FBox& NewB
 	LevelData->UpdateBlock(BlockID, FNavGridBlock(NewBoundData));
 }
 
-TArray<FNavGridBlock> ANavigationGridData::GetNavigationBlocks() const
+TMap<uint32, FNavGridBlock>& ANavigationGridData::GetNavigationBlocks() const
 {
-	return LevelData->GetBlocks();
+	return LevelData->Blocks;
+}
+
+TSharedPtr<FNavGridLevel> ANavigationGridData::GetLevelData() const
+{
+	return LevelData;
+}
+
+FNavGridLevel& ANavigationGridData::GetLevelDataBlueprint() const
+{
+	return *LevelData;
 }
 
 void ANavigationGridData::HandleRebuildNavigation() const
@@ -117,17 +128,17 @@ FPathFindingResult ANavigationGridData::FindPath(const FNavAgentProperties& Agen
 
 	FPathFindingResult Result(ENavigationQueryResult::Error);
 
-	UE_LOG(LogGNRecastNavMesh, Log, TEXT("Got cost limit of: '%0.2f'"), Query.CostLimit);
+	UE_LOG(LogNavigationGridData, Log, TEXT("Got cost limit of: '%0.2f'"), Query.CostLimit);
 
-	const auto* Self = Cast<const ARecastNavMesh>(Query.NavData.Get());
+	const auto* Self = Cast<const ANavigationGridData>(Query.NavData.Get());
 	const auto* NavFilter = Query.QueryFilter.Get();
 
 	if (!Self) {
-		UE_LOG(LogGNRecastNavMesh, Error, TEXT("Failed to retrieve reference to RecastNavMesh in FindPath"));
+		UE_LOG(LogNavigationGridData, Error, TEXT("Failed to retrieve reference to RecastNavMesh in FindPath"));
 		return Result;
 	}
 	if (!NavFilter) {
-		UE_LOG(LogGNRecastNavMesh, Error, TEXT("Failed to retrieve reference to query filter in FindPath"));
+		UE_LOG(LogNavigationGridData, Error, TEXT("Failed to retrieve reference to query filter in FindPath"));
 		return Result;
 	}
 	
@@ -145,7 +156,7 @@ FPathFindingResult ANavigationGridData::FindPath(const FNavAgentProperties& Agen
 	}
 
 	if (!NavMeshPath) {
-		UE_LOG(LogGNRecastNavMesh, Error, TEXT("Somehow failed to instantiate destination navpath in FindPath; this should never happen"));
+		UE_LOG(LogNavigationGridData, Error, TEXT("Somehow failed to instantiate destination navpath in FindPath; this should never happen"));
 		return Result;
 	}
 
@@ -165,7 +176,9 @@ FPathFindingResult ANavigationGridData::FindPath(const FNavAgentProperties& Agen
 	const FVector StartLocation = FMappingServer::RoundToGrid(Query.StartLocation);
 	const FVector EndLocation   = FMappingServer::RoundToGrid(Query.EndLocation);
 
-	const auto [Points, _] = FMappingServer::GetInstance().FindPath(StartLocation, EndLocation, DistanceBudget);
+	UE_LOG(LogNavigationGridData, Log, TEXT("FindPath with nav data: %s"), *Self->GetPathName());
+
+	const auto Points = Self->LevelData->FindPath(Query.StartLocation, Query.EndLocation);
 
 	if (Points.IsEmpty()) {
 		Result = ENavigationQueryResult::Fail;

@@ -4,7 +4,7 @@
 #include "AI/NavigationSystemBase.h"
 #include "MapData/NavGridLevel.h"
 
-DECLARE_LOG_CATEGORY_CLASS(LogGNNavDataGenerator, Log, All);
+DECLARE_LOG_CATEGORY_CLASS(LogNavigationGridDataGenerator, Log, All);
 
 FNavigationGridDataGenerator::FNavigationGridDataGenerator() {}
 
@@ -15,6 +15,8 @@ bool FNavigationGridDataGenerator::RebuildAll()
 	if (CurrentBuildTask.IsValid()) {
 		CurrentBuildTask->EnsureCompletion();
 	}
+
+	UE_LOG(LogNavigationGridDataGenerator, Log, TEXT("Running build for navigation data: %s"), *LinkedNavData->GetPathName());
 
 	CurrentBuildTask = MakeUnique<FGNAsyncBuildTask>(FNavGridBuildTask(GetWorld(), LinkedNavData));
 	check(CurrentBuildTask.IsValid());
@@ -42,13 +44,13 @@ void FNavigationGridDataGenerator::OnNavigationBoundsChanged()
 void FNavigationGridDataGenerator::RebuildDirtyAreas(const TArray<FNavigationDirtyArea>& DirtyAreas)
 {
 	if (!LinkedNavData) {
-		UE_LOG(LogGNNavDataGenerator, Error, TEXT("Tried to RebuildDirtyAreas without a linked ANavigationData instance"));
+		UE_LOG(LogNavigationGridDataGenerator, Error, TEXT("Tried to RebuildDirtyAreas without a linked ANavigationData instance"));
 		return;
 	}
 	
 	const auto* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
 	if (!IsValid(NavSys)) {
-		UE_LOG(LogGNNavDataGenerator, Error, TEXT("Failed to retrieve navigation system during RebuildDirtyAreas"));
+		UE_LOG(LogNavigationGridDataGenerator, Error, TEXT("Failed to retrieve navigation system during RebuildDirtyAreas"));
 		return;
 	}
 	const auto& RegisteredBounds = NavSys->GetNavigationBounds();
@@ -81,17 +83,7 @@ void FNavigationGridDataGenerator::RebuildDirtyAreas(const TArray<FNavigationDir
 			LinkedNavData->LevelData->UpdateBlock(UniqueID, FNavGridBlock(AreaBox));
 		}
 	}
-	
-	// FString AreasString("\r\n");
-	// for (const auto& DirtyArea : DirtyAreas) {
-	// 	AreasString += DirtyArea.Bounds.ToString() + "\r\n";
-	// }
-	// AreasString += "aaa \r\n";
-	// for (const auto& Area : NavSys->GetNavigationBounds()) {
-	// 	AreasString += Area.AreaBox.ToString() + "\r\n";
-	// }
-	// UE_LOG(LogGNNavDataGenerator, Log, TEXT("Got RebuildDirtyAreas for: '%s'"), *AreasString);
-	
+
 	RebuildAll();
 }
 

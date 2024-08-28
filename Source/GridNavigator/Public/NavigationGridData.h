@@ -14,6 +14,7 @@ class GRIDNAVIGATOR_API ANavigationGridData : public ARecastNavMesh
 	GENERATED_BODY()
 
 	friend class FNavigationGridDataGenerator;
+	friend class FNavGridDataSerializer;
 	
 public:
 	ANavigationGridData(const FObjectInitializer& ObjectInitializer);
@@ -33,8 +34,11 @@ public:
 
 	FORCEINLINE void UpdateBlockData(const uint32 BlockID, const FBox& NewBoundData);
 
-	UFUNCTION(BlueprintPure, Category = "Navigation")
-	TArray<FNavGridBlock> GetNavigationBlocks() const;
+	TMap<uint32, FNavGridBlock>& GetNavigationBlocks() const;
+	FORCEINLINE TSharedPtr<FNavGridLevel> GetLevelData() const;
+
+	UFUNCTION(BlueprintCallable, Category="Navigation", DisplayName="Get Level Data")
+	FORCEINLINE FNavGridLevel& GetLevelDataBlueprint() const;
 
 	UPROPERTY(BlueprintAssignable, Category = "Navigation")
 	FNavigationDataBlockUpdatedDelegate OnNavigationDataBlockUpdated;

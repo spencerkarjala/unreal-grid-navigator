@@ -27,64 +27,10 @@ void FNavGridBuildTask::DoWork() const
 		return;
 	}
 
-	auto DataBlocks = DataRef->GetNavigationBlocks();
-	for (auto& Block : DataBlocks) {
-		UE_LOG(LogNavGridBuildTask, Warning, TEXT("data: %s"), *Block.Bounds.ToString());
+	const auto LevelData = DataRef->GetLevelData();
+	for (auto& [ID, Block] : LevelData->Blocks) {
 		PopulateBlock(*WorldRef, Block);
 	}
-}
-
-static constexpr float ASSUMED_GRID_SPACING = 100.0;
-
-FIntVector2 WorldToGridIndex(const FVector2f& WorldCoord)
-{
-	return FIntVector2(
-		FMath::RoundToInt(WorldCoord.X / static_cast<float>(GridNavigatorConfig::GridSizeX)),
-		FMath::RoundToInt(WorldCoord.Y / static_cast<float>(GridNavigatorConfig::GridSizeY))
-	);
-}
-
-FIntVector3 WorldToGridIndex(const FVector& WorldCoord)
-{
-	return FIntVector3(
-		FMath::RoundToInt(WorldCoord.X / static_cast<float>(GridNavigatorConfig::GridSizeX)),
-		FMath::RoundToInt(WorldCoord.Y / static_cast<float>(GridNavigatorConfig::GridSizeY)),
-		FMath::RoundToInt(WorldCoord.Z / static_cast<float>(GridNavigatorConfig::GridSizeLayer))
-	);
-}
-
-FVector2f GridIndexToWorld(const FIntVector2& IndexCoord)
-{
-	return FVector2f(
-		static_cast<float>(IndexCoord.X) * static_cast<float>(GridNavigatorConfig::GridSizeX),
-		static_cast<float>(IndexCoord.Y) * static_cast<float>(GridNavigatorConfig::GridSizeY)
-	);
-}
-
-FVector2f GridIndexToWorld(const FVector2f& IndexCoord)
-{
-	return FVector2f(
-		static_cast<float>(IndexCoord.X) * static_cast<float>(GridNavigatorConfig::GridSizeX),
-		static_cast<float>(IndexCoord.Y) * static_cast<float>(GridNavigatorConfig::GridSizeY)
-	);
-}
-
-FVector GridIndexToWorld(const FIntVector3& IndexCoord)
-{
-	return FVector(
-		static_cast<float>(IndexCoord.X) * static_cast<float>(GridNavigatorConfig::GridSizeX),
-		static_cast<float>(IndexCoord.Y) * static_cast<float>(GridNavigatorConfig::GridSizeY),
-		static_cast<float>(IndexCoord.Z) * static_cast<float>(GridNavigatorConfig::GridSizeLayer)
-	);
-}
-
-FVector GridIndexToWorld(const FVector& IndexCoord)
-{
-	return FVector(
-		static_cast<float>(IndexCoord.X) * static_cast<float>(GridNavigatorConfig::GridSizeX),
-		static_cast<float>(IndexCoord.Y) * static_cast<float>(GridNavigatorConfig::GridSizeY),
-		static_cast<float>(IndexCoord.Z) * static_cast<float>(GridNavigatorConfig::GridSizeLayer)
-	);
 }
 
 FVector2f SubGridIndexToWorld(const FVector2f& IndexCoord, FIntVector2 Direction, const float Alpha)
@@ -94,15 +40,15 @@ FVector2f SubGridIndexToWorld(const FVector2f& IndexCoord, FIntVector2 Direction
 	UnitDirection.Normalize();
 	UnitDirection = FVector2f(FMath::RoundToFloat(UnitDirection.X), FMath::RoundToFloat(UnitDirection.Y));
 
-	FVector2f WorldCoords(IndexCoord.X * ASSUMED_GRID_SPACING, IndexCoord.Y * ASSUMED_GRID_SPACING);
+	FVector2f WorldCoords(IndexCoord.X * GridNavigatorConfig::ASSUMED_GRID_SPACING, IndexCoord.Y * GridNavigatorConfig::ASSUMED_GRID_SPACING);
 	
-	return WorldCoords + UnitDirection * Alpha * ASSUMED_GRID_SPACING;
+	return WorldCoords + UnitDirection * Alpha * GridNavigatorConfig::ASSUMED_GRID_SPACING;
 }
 
 bool FloorTrace(const float I, const float J, const float MaxZ, const float MinZ, FHitResult& HitResult, const UWorld& World)
 {
 	const FVector2f GridIndex(I, J);
-	const FVector2f WorldCoordXY = GridIndexToWorld(GridIndex);
+	const FVector2f WorldCoordXY = GridNavigatorConfig::GridIndexToWorld(GridIndex);
 	const FVector WorldLocationTraceStart(WorldCoordXY.X, WorldCoordXY.Y, MaxZ * 25.0);
 	const FVector WorldLocationTraceEnd  (WorldCoordXY.X, WorldCoordXY.Y, MinZ * 25.0);
 	
@@ -162,6 +108,7 @@ void FNavGridBuildTask::PopulateBlock(const UWorld& World, FNavGridBlock& Block)
 			}
 			
 			Map.AddNode(i, j, Layer, HitResult.Location.Z);
+			UE_LOG(LogNavGridBuildTask, Verbose, TEXT("Added new node to nav grid at indices (%d, %d, %d)"), i, j, Layer);
 
 			for (const auto& [NeighborI, NeighborJ] : Neighbors) {
 				FHitResult NeighborHitResult(ForceInit);
