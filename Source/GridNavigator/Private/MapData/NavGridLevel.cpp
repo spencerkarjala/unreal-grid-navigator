@@ -45,5 +45,11 @@ TArray<FVector> FNavGridLevel::FindPath(const FVector& From, const FVector& To)
 	const FIntVector3 FromIndex = GridNavigatorConfig::WorldToGridIndex(From);
 	const FIntVector3 ToIndex   = GridNavigatorConfig::WorldToGridIndex(To);
 
-	return StartBlock->Data.FindPath(FromIndex, ToIndex);
+	TArray<FVector> PathPoints = StartBlock->Data.FindPath(FromIndex, ToIndex);
+
+	for (auto& Point : PathPoints) {
+		Point = GridNavigatorConfig::GridIndexToWorld(Point);
+	}
+
+	return PathPoints;
 }
