@@ -1,8 +1,8 @@
-#include "NavGridRenderingComponent.h"
+#include "GridNavigator/Public/Display/NavGridRenderingComponent.h"
 
+#include "GridNavigatorConfig.h"
 #include "NavigationGridData.h"
-#include "MappingServer.h"
-#include "NavGridSceneProxy.h"
+#include "Display/NavGridSceneProxy.h"
 #include "NavMesh/NavMeshRenderingComponent.h"
 
 DECLARE_LOG_CATEGORY_CLASS(LogNavGridRenderingComponent, Log, All);
@@ -76,8 +76,7 @@ FDebugRenderSceneProxy* UNavGridRenderingComponent::CreateDebugSceneProxy()
 		return nullptr;
 	}
 
-	auto& MapServer = FMappingServer::GetInstance();
-	const auto NodeList = MapServer.GetMapNodeList();
+	const auto NodeList = NavGrid->GetNodeList();
 	
 	for (const auto& Node : NodeList) {
 		const FVector BoxPos(Node.X * 100.00, Node.Y * 100.0, Node.Layer * 25.0);
@@ -87,10 +86,10 @@ FDebugRenderSceneProxy* UNavGridRenderingComponent::CreateDebugSceneProxy()
 		FColor BoxColor(0, 255, 0);
 		
 		for (const auto& [InNodeID, OutNodeID, EdgeType, EdgeDirection] : Node.OutEdges) {
-			const auto& InNodeResult = MapServer.GetNode(InNodeID);   // should never fail
-			const auto& OutNodeResult = MapServer.GetNode(OutNodeID); // can fail if something else has broken
-
-			check(InNodeResult.has_value() && InNodeResult->get() == Node);
+			// const auto& InNodeResult = MapServer.GetNode(InNodeID);   // should never fail
+			// const auto& OutNodeResult = MapServer.GetNode(OutNodeID); // can fail if something else has broken
+			//
+			// check(InNodeResult.has_value() && InNodeResult->get() == Node);
 
 			FColor LineColor;
 			switch(EdgeType) {
@@ -110,16 +109,16 @@ FDebugRenderSceneProxy* UNavGridRenderingComponent::CreateDebugSceneProxy()
 				break;
 			}
 			
-			if (!OutNodeResult.has_value()) {
-				LineColor = FColor(255, 0, 0);
-				BoxColor = FColor(255, 0, 0);
-			}
+			// if (!OutNodeResult.has_value()) {
+			// 	LineColor = FColor(255, 0, 0);
+			// 	BoxColor = FColor(255, 0, 0);
+			// }
 
 			const FIntVector3 InNodeIndex(Node.X, Node.Y, Node.Layer);
-			const FVector InNodeWorldPos = FMappingServer::GridIndexToWorld(InNodeIndex);
+			const FVector InNodeWorldPos = GridNavigatorConfig::GridIndexToWorld(InNodeIndex);
 
 			const FIntVector3 OutNodeIndex(Node.X + EdgeDirection.X, Node.Y + EdgeDirection.Y, Node.Layer + EdgeDirection.Z);
-			const FVector OutNodeWorldPos = FMappingServer::GridIndexToWorld(OutNodeIndex);
+			const FVector OutNodeWorldPos = GridNavigatorConfig::GridIndexToWorld(OutNodeIndex);
 
 			// slight offset so arrows don't all start and end in the same place; increases readability
 			const FVector MidPointWorldPos = (InNodeWorldPos + OutNodeWorldPos) / 2.0;
@@ -139,7 +138,12 @@ FDebugRenderSceneProxy* UNavGridRenderingComponent::CreateDebugSceneProxy()
 
 FBoxSphereBounds UNavGridRenderingComponent::CalcBounds(const FTransform& LocalToWorld) const
 {
-	const auto CalculatedBounds = FMappingServer::GetInstance().GetBounds().TransformBy(LocalToWorld);
+	const auto* NavGrid = Cast<ANavigationGridData>(GetOwner());
+	if (!IsValid(NavGrid)) {
+		UE_LOG(LogNavGridRenderingComponent, Fatal, TEXT("Tried to CalcBounds on a NavGridRenderingComponent that is not assigned to a NavGrid"));
+	}
+
+	const auto CalculatedBounds = NavGrid->GetBounds().TransformBy(LocalToWorld);
 	return CalculatedBounds;
 }
 

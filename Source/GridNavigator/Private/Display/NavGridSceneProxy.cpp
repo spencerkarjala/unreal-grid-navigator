@@ -1,4 +1,4 @@
-#include "NavGridSceneProxy.h"
+#include "Display/NavGridSceneProxy.h"
 
 FNavGridSceneProxy::FNavGridSceneProxy(const UPrimitiveComponent* InComponent)
 	: FDebugRenderSceneProxy(InComponent)

@@ -37,7 +37,8 @@ TArray<FVector> FNavGridLevel::FindPath(const FVector& From, const FVector& To)
 			StartBlock = &Block;
 		}
 	}
-	
+
+	// if no start block was found, then the start point isn't in a navigable area
 	if (StartBlock == nullptr) {
 		return {};
 	}

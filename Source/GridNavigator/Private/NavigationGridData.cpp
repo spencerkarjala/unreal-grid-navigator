@@ -5,7 +5,7 @@
 
 #include <functional>
 
-#include "NavGridRenderingComponent.h"
+#include "Display/NavGridRenderingComponent.h"
 #include "MappingServer.h"
 #include "NavMesh/PImplRecastNavMesh.h"
 #include "NavigationGridDataGenerator.h"
@@ -92,6 +92,19 @@ TMap<uint32, FNavGridBlock>& ANavigationGridData::GetNavigationBlocks() const
 TSharedPtr<FNavGridLevel> ANavigationGridData::GetLevelData() const
 {
 	return LevelData;
+}
+
+TArray<NavGrid::FNode> ANavigationGridData::GetNodeList() const
+{
+	if (!LevelData) {
+		return {};
+	}
+	
+	TArray<NavGrid::FNode> Nodes;
+	for (auto& [ID, Block] : LevelData->Blocks) {
+		Nodes.Append(Block.Data.GetNodeList());
+	}
+	return Nodes;
 }
 
 FNavGridLevel& ANavigationGridData::GetLevelDataBlueprint() const

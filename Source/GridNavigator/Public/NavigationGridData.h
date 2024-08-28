@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "NavMesh/RecastNavMesh.h"
 #include "MapData/NavGridLevel.h"
-#include "NavGridRenderingComponent.h"
+#include "Display/NavGridRenderingComponent.h"
 #include "NavigationGridData.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FNavigationDataBlockUpdatedDelegate, uint32, ID, const FBox&, Bounds);
@@ -36,6 +36,8 @@ public:
 
 	TMap<uint32, FNavGridBlock>& GetNavigationBlocks() const;
 	FORCEINLINE TSharedPtr<FNavGridLevel> GetLevelData() const;
+
+	FORCEINLINE TArray<NavGrid::FNode> GetNodeList() const;
 
 	UFUNCTION(BlueprintCallable, Category="Navigation", DisplayName="Get Level Data")
 	FORCEINLINE FNavGridLevel& GetLevelDataBlueprint() const;
