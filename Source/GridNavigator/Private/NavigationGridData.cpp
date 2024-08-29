@@ -114,23 +114,6 @@ FNavGridLevel& ANavigationGridData::GetLevelDataBlueprint() const
 
 void ANavigationGridData::HandleRebuildNavigation() const
 {
-	// const auto* World = GetWorld();
-	// if (!IsValid(World)) {
-	// 	return;
-	// }
-	//
-	// const auto& NavigableBounds = GetNavigableBounds();
-	// for (const auto& Bound : NavigableBounds) {
-	// 	const auto MinIndex = FMappingServer::RoundToGrid(Bound.Min);
-	// 	const auto MaxIndex = FMappingServer::RoundToGrid(Bound.Max);
-	//
-	// 	FMappingServer::GetInstance().RemapFromBound(*World, FBox(MinIndex, MaxIndex));
-	//
-	// 	break;
-	// }
-	// if (DebugRenderingComponent) {
-	// 	DebugRenderingComponent->MarkRenderStateDirty();
-	// }
 }
 
 FPathFindingResult ANavigationGridData::FindPath(const FNavAgentProperties& AgentProperties, const FPathFindingQuery& Query)

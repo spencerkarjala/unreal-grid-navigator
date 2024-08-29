@@ -1,6 +1,5 @@
 #include "GNCursorComponent.h"
 
-#include "MappingServer.h"
 #include "NavigationPath.h"
 #include "NavigationSystem.h"
 #include "Components/SplineComponent.h"
