@@ -1,6 +1,8 @@
 #include "GNCursorComponent.h"
 
 #include "MappingServer.h"
+#include "NavigationPath.h"
+#include "NavigationSystem.h"
 #include "Components/SplineComponent.h"
 #include "Components/SplineMeshComponent.h"
 #include "Interfaces/IPluginManager.h"
@@ -92,8 +94,14 @@ bool UGNCursorComponent::UpdatePosition(const FVector& WorldDestination, const F
 		UE_LOG(LogGNCursorComponent, Error, TEXT("Failed to GetWorld while trying to UpdatePosition"));
 		return false;
 	}
+
+	const auto* NavSys = Cast<UNavigationSystemV1>(World->GetNavigationSystem());
+	if (!IsValid(NavSys)) {
+		UE_LOG(LogGNCursorComponent, Error, TEXT("Failed to retrieve navigation system while trying to UpdatePosition"));
+		return false;
+	}
 	
-	const auto* OwnerActor = GetOwner();
+	auto* OwnerActor = GetOwner();
 	if (!IsValid(OwnerActor)) {
 		UE_LOG(LogGNCursorComponent, Error, TEXT("Failed to retrieve OwnerActor when trying to UpdatePosition"));
 		return false;
@@ -109,7 +117,8 @@ bool UGNCursorComponent::UpdatePosition(const FVector& WorldDestination, const F
 		return false;
 	}
 	
-	const TArray<FVector> PathPoints = FMappingServer::GetInstance().FindPath(FloorTraceResult.Location, DestinationRounded);
+	UNavigationPath* FoundPath = NavSys->FindPathToLocationSynchronously(OwnerActor, FloorTraceResult.Location, DestinationRounded);
+	const auto& PathPoints = FoundPath->PathPoints;
 
 	// hide cursor if destination is not reachable
 	if (PathPoints.Num() < 2) {

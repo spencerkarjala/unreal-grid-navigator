@@ -52,7 +52,7 @@ bool FloorTrace(const float I, const float J, const float MaxZ, const float MinZ
 	const FVector WorldLocationTraceStart(WorldCoordXY.X, WorldCoordXY.Y, MaxZ * 25.0);
 	const FVector WorldLocationTraceEnd  (WorldCoordXY.X, WorldCoordXY.Y, MinZ * 25.0);
 	
-	const FCollisionQueryParams TraceParams(FName(TEXT("FMappingServerTraceParams")));
+	const FCollisionQueryParams TraceParams(FName(TEXT("FNavGridBuildTaskTraceParams")));
 	
 	return World.LineTraceSingleByObjectType(HitResult, WorldLocationTraceStart, WorldLocationTraceEnd, ECC_WorldStatic);
 }
@@ -64,7 +64,7 @@ bool SubGridFloorTrace(const int I, const int J, const float MaxZ, const float M
 	const FVector WorldLocationTraceStart(WorldCoordXY.X, WorldCoordXY.Y, MaxZ * 25.0);
 	const FVector WorldLocationTraceEnd  (WorldCoordXY.X, WorldCoordXY.Y, MinZ * 25.0);
 	
-	const FCollisionQueryParams TraceParams(FName(TEXT("FMappingServerTraceParams")));
+	const FCollisionQueryParams TraceParams(FName(TEXT("FNavGridBuildTaskTraceParams")));
 	
 	return World.LineTraceSingleByObjectType(HitResult, WorldLocationTraceStart, WorldLocationTraceEnd, ECC_WorldStatic);
 }

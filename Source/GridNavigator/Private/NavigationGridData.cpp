@@ -5,8 +5,8 @@
 
 #include <functional>
 
+#include "GridNavigatorConfig.h"
 #include "Display/NavGridRenderingComponent.h"
-#include "MappingServer.h"
 #include "NavMesh/PImplRecastNavMesh.h"
 #include "NavigationGridDataGenerator.h"
 #include "MapData/NavGridDataSerializer.h"
@@ -114,23 +114,23 @@ FNavGridLevel& ANavigationGridData::GetLevelDataBlueprint() const
 
 void ANavigationGridData::HandleRebuildNavigation() const
 {
-	const auto* World = GetWorld();
-	if (!IsValid(World)) {
-		return;
-	}
-	
-	const auto& NavigableBounds = GetNavigableBounds();
-	for (const auto& Bound : NavigableBounds) {
-		const auto MinIndex = FMappingServer::RoundToGrid(Bound.Min);
-		const auto MaxIndex = FMappingServer::RoundToGrid(Bound.Max);
-
-		FMappingServer::GetInstance().RemapFromBound(*World, FBox(MinIndex, MaxIndex));
-
-		break;
-	}
-	if (DebugRenderingComponent) {
-		DebugRenderingComponent->MarkRenderStateDirty();
-	}
+	// const auto* World = GetWorld();
+	// if (!IsValid(World)) {
+	// 	return;
+	// }
+	//
+	// const auto& NavigableBounds = GetNavigableBounds();
+	// for (const auto& Bound : NavigableBounds) {
+	// 	const auto MinIndex = FMappingServer::RoundToGrid(Bound.Min);
+	// 	const auto MaxIndex = FMappingServer::RoundToGrid(Bound.Max);
+	//
+	// 	FMappingServer::GetInstance().RemapFromBound(*World, FBox(MinIndex, MaxIndex));
+	//
+	// 	break;
+	// }
+	// if (DebugRenderingComponent) {
+	// 	DebugRenderingComponent->MarkRenderStateDirty();
+	// }
 }
 
 FPathFindingResult ANavigationGridData::FindPath(const FNavAgentProperties& AgentProperties, const FPathFindingQuery& Query)
@@ -186,8 +186,8 @@ FPathFindingResult ANavigationGridData::FindPath(const FNavAgentProperties& Agen
 	}
 
 	const float DistanceBudget = Query.CostLimit;
-	const FVector StartLocation = FMappingServer::RoundToGrid(Query.StartLocation);
-	const FVector EndLocation   = FMappingServer::RoundToGrid(Query.EndLocation);
+	const FVector StartLocation = GridNavigatorConfig::RoundToGrid(Query.StartLocation);
+	const FVector EndLocation   = GridNavigatorConfig::RoundToGrid(Query.EndLocation);
 
 	UE_LOG(LogNavigationGridData, Log, TEXT("FindPath with nav data: %s"), *Self->GetPathName());
 

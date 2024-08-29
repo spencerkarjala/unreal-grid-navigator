@@ -62,4 +62,22 @@ public:
 			static_cast<float>(IndexCoord.Z) * static_cast<float>(GridNavigatorConfig::GridSizeLayer)
 		);
 	}
+	
+	static FVector RoundToGrid(const FVector& Value) 
+	{
+		return FVector(
+			round(Value.X / 100.0) * 100.00,
+			round(Value.Y / 100.0) * 100.00,
+			round(Value.Z / 25.0) * 25.0
+		);
+	}
+	
+	static FVector TruncToGrid(const FVector& Value)
+	{
+		return FVector(
+			floor(Value.X / 100.0) * 100.0,
+			floor(Value.Y / 100.0) * 100.0,
+			floor(Value.Z / 25.0) * 25.0
+		);
+	}
 };
