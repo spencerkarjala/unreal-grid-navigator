@@ -31,6 +31,8 @@ void FNavGridBuildTask::DoWork() const
 	for (auto& [ID, Block] : LevelData->Blocks) {
 		PopulateBlock(*WorldRef, Block);
 	}
+
+	auto Result = OnCompleted.ExecuteIfBound();
 }
 
 FVector2f SubGridIndexToWorld(const FVector2f& IndexCoord, FIntVector2 Direction, const float Alpha)

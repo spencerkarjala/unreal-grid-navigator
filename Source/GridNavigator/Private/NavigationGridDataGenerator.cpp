@@ -28,6 +28,7 @@ bool FNavigationGridDataGenerator::RebuildAll()
 
 	CurrentBuildTask = MakeUnique<FAsyncBuildTask>(FNavGridBuildTask(GetWorld(), LinkedNavData));
 	check(CurrentBuildTask.IsValid());
+	CurrentBuildTask->GetTask().OnCompleted.BindSP(this, &FNavigationGridDataGenerator::HandleBuildCompleted);
 	CurrentBuildTask->StartBackgroundTask();
 
 	return true;
@@ -108,4 +109,12 @@ int32 FNavigationGridDataGenerator::GetNumRemaningBuildTasks() const
 int32 FNavigationGridDataGenerator::GetNumRunningBuildTasks() const
 {
 	return CurrentBuildTask.IsValid() && !CurrentBuildTask->IsWorkDone() ? 1 : 0;
+}
+
+void FNavigationGridDataGenerator::HandleBuildCompleted() const
+{
+	UE_LOG(LogNavigationGridDataGenerator, Log, TEXT("Trying to access DebugRenderingComponent for object %s at address %p"), *LinkedNavData->GetPathName(), LinkedNavData);
+	if (LinkedNavData != nullptr && LinkedNavData->RenderingComp) {
+		LinkedNavData->RenderingComp->MarkRenderStateDirty();
+	}
 }

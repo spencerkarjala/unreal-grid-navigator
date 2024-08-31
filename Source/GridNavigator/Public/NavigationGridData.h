@@ -49,10 +49,5 @@ public:
 private:
 	static FPathFindingResult FindPath(const FNavAgentProperties& AgentProperties, const FPathFindingQuery& Query);
 
-	UPROPERTY()
-	TObjectPtr<UNavGridRenderingComponent> DebugRenderingComponent;
-
-	void HandleRebuildNavigation() const;
-
 	TSharedPtr<FNavGridLevel> LevelData = nullptr;
 };

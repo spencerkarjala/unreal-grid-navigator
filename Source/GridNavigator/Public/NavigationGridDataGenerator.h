@@ -9,7 +9,7 @@ class GRIDNAVIGATOR_API FNavigationGridDataGenerator final : public FNavDataGene
 public:
 	FNavigationGridDataGenerator();
 	explicit FNavigationGridDataGenerator(ANavigationGridData* NavData);
-	~FNavigationGridDataGenerator();
+	virtual ~FNavigationGridDataGenerator() override;
 
 	/**
 	 * @brief Triggers a full rebuild of all navigation data associated with this generator
@@ -67,4 +67,6 @@ private:
 	
 	ANavigationGridData* LinkedNavData = nullptr;
 	TUniquePtr<FAsyncBuildTask> CurrentBuildTask = nullptr;
+
+	void HandleBuildCompleted() const;
 };

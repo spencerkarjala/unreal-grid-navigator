@@ -22,8 +22,7 @@ ANavigationGridData::ANavigationGridData(const FObjectInitializer& ObjectInitial
 
 void ANavigationGridData::OnNavigationBoundsChanged()
 {
-	// Super::OnNavigationBoundsChanged();
-	HandleRebuildNavigation();
+	Super::OnNavigationBoundsChanged();
 }
 
 void ANavigationGridData::RebuildDirtyAreas(const TArray<FNavigationDirtyArea>& DirtyAreas)
@@ -33,11 +32,7 @@ void ANavigationGridData::RebuildDirtyAreas(const TArray<FNavigationDirtyArea>& 
 
 UPrimitiveComponent* ANavigationGridData::ConstructRenderingComponent()
 {
-	DebugRenderingComponent = NewObject<UNavGridRenderingComponent>(this, TEXT("NavGridRenderingComponent"), RF_Transient);
-	if (!DebugRenderingComponent) {
-		return nullptr;
-	}
-	return DebugRenderingComponent.Get();
+	return  NewObject<UNavGridRenderingComponent>(this, TEXT("NavGridRenderingComponent"), RF_Transient);
 }
 
 FBox ANavigationGridData::GetBounds() const
@@ -80,7 +75,6 @@ void ANavigationGridData::ConditionalConstructGenerator()
 
 void ANavigationGridData::RebuildNavigation() const
 {
-	HandleRebuildNavigation();
 }
 
 FString ANavigationGridData::GetDataString() const
@@ -120,10 +114,6 @@ TArray<NavGrid::FNode> ANavigationGridData::GetNodeList() const
 FNavGridLevel& ANavigationGridData::GetLevelDataBlueprint() const
 {
 	return *LevelData;
-}
-
-void ANavigationGridData::HandleRebuildNavigation() const
-{
 }
 
 FPathFindingResult ANavigationGridData::FindPath(const FNavAgentProperties& AgentProperties, const FPathFindingQuery& Query)

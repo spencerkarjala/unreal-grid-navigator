@@ -1,6 +1,8 @@
 #pragma once
 #include "NavigationGridData.h"
 
+DECLARE_DELEGATE(FNavGridBuildTaskDelegate)
+
 class FNavGridBuildTask : public FNonAbandonableTask
 {
 public:
@@ -11,6 +13,8 @@ public:
 
 	void DoWork() const;
 	static void PopulateBlock(const UWorld& World, FNavGridBlock& Block);
+
+	FNavGridBuildTaskDelegate OnCompleted;
 
 private:
 	TObjectPtr<UWorld> WorldRef;

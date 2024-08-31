@@ -10,8 +10,7 @@ class UNavGridRenderingComponent : public UDebugDrawComponent
 	GENERATED_BODY()
 
 public:
-	// ReSharper disable once CppNonExplicitConvertingConstructor
-	UNavGridRenderingComponent(const FObjectInitializer& ObjectInitializer);
+	explicit UNavGridRenderingComponent(const FObjectInitializer& ObjectInitializer);
 
 	virtual void OnRegister() override;
 	virtual void OnUnregister() override;
