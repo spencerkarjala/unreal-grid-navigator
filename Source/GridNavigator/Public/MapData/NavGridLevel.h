@@ -72,9 +72,14 @@ struct FNavGridLevel
 	 */
 	FString ToString() const;
 
-	TArray<FVector> FindPath(const FVector& From, const FVector& To);
+	/**
+	 * @brief Retrieves the bounding box for the stored navigation data
+	 * 
+	 * @return The smallest \c FBox that contains all navigation data
+	 */
+	FBox GetBounds() const;
 
-	void GetBlockDataBlueprint(TArray<uint32>& IDs, TArray<FNavGridBlock> Blocks);
+	TArray<FVector> FindPath(const FVector& From, const FVector& To);
 
 	TMap<uint32, FNavGridBlock> Blocks;
 };

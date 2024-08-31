@@ -40,6 +40,16 @@ UPrimitiveComponent* ANavigationGridData::ConstructRenderingComponent()
 	return DebugRenderingComponent.Get();
 }
 
+FBox ANavigationGridData::GetBounds() const
+{
+	if (!LevelData) {
+		UE_LOG(LogNavigationGridData, Error, TEXT("Tried to GetBounds without any instantiated level data"));
+		return FBox();
+	}
+	
+	return LevelData->GetBounds();
+}
+
 void ANavigationGridData::Serialize(FArchive& Ar)
 {
 	Super::Serialize(Ar);

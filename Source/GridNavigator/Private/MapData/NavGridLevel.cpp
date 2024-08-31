@@ -24,6 +24,22 @@ FString FNavGridLevel::ToString() const
 	return Result;
 }
 
+FBox FNavGridLevel::GetBounds() const
+{
+	const FVector MaxFloatVector = FVector(TNumericLimits<float>::Max());
+	const FVector MinFloatVector = FVector(TNumericLimits<float>::Min());
+	FBox Result(MaxFloatVector, MinFloatVector);
+	for (const auto& [ID, Block] : Blocks) {
+		Result.Min.X = FMath::Min(Result.Min.X, Block.Bounds.Min.X);
+		Result.Min.Y = FMath::Min(Result.Min.Y, Block.Bounds.Min.Y);
+		Result.Min.Z = FMath::Min(Result.Min.Z, Block.Bounds.Min.Z);
+		Result.Max.X = FMath::Max(Result.Max.X, Block.Bounds.Max.X);
+		Result.Max.Y = FMath::Max(Result.Max.Y, Block.Bounds.Max.Y);
+		Result.Max.Z = FMath::Max(Result.Max.Z, Block.Bounds.Max.Z);
+	}
+	return Result;
+}
+
 TArray<FVector> FNavGridLevel::FindPath(const FVector& From, const FVector& To)
 {
 	UE_LOG(LogNavGridLevel, Log, TEXT("Level got FindPath from '%s' to '%s'"), *From.ToString(), *To.ToString());

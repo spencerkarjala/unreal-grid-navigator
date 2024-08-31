@@ -22,6 +22,7 @@ public:
 	virtual void OnNavigationBoundsChanged() override;
 	virtual void RebuildDirtyAreas(const TArray<FNavigationDirtyArea>& DirtyAreas) override;
 	virtual UPrimitiveComponent* ConstructRenderingComponent() override;
+	virtual FBox GetBounds() const override;
 
 	virtual void Serialize(FArchive& Ar) override;
 
