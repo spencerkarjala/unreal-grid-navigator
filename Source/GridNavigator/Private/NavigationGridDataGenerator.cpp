@@ -10,6 +10,14 @@ FNavigationGridDataGenerator::FNavigationGridDataGenerator() {}
 
 FNavigationGridDataGenerator::FNavigationGridDataGenerator(ANavigationGridData* NavData) : LinkedNavData(NavData) {}
 
+FNavigationGridDataGenerator::~FNavigationGridDataGenerator()
+{
+	if (CurrentBuildTask) {
+		CurrentBuildTask->EnsureCompletion();
+		CurrentBuildTask.Reset();
+	}
+}
+
 bool FNavigationGridDataGenerator::RebuildAll()
 {
 	if (CurrentBuildTask.IsValid()) {
@@ -18,7 +26,7 @@ bool FNavigationGridDataGenerator::RebuildAll()
 
 	UE_LOG(LogNavigationGridDataGenerator, Log, TEXT("Running build for navigation data: %s"), *LinkedNavData->GetPathName());
 
-	CurrentBuildTask = MakeUnique<FGNAsyncBuildTask>(FNavGridBuildTask(GetWorld(), LinkedNavData));
+	CurrentBuildTask = MakeUnique<FAsyncBuildTask>(FNavGridBuildTask(GetWorld(), LinkedNavData));
 	check(CurrentBuildTask.IsValid());
 	CurrentBuildTask->StartBackgroundTask();
 

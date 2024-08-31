@@ -9,6 +9,7 @@ class GRIDNAVIGATOR_API FNavigationGridDataGenerator final : public FNavDataGene
 public:
 	FNavigationGridDataGenerator();
 	explicit FNavigationGridDataGenerator(ANavigationGridData* NavData);
+	~FNavigationGridDataGenerator();
 
 	/**
 	 * @brief Triggers a full rebuild of all navigation data associated with this generator
@@ -62,8 +63,8 @@ protected:
 	FORCEINLINE UWorld* GetWorld() const { return IsValid(LinkedNavData) ? LinkedNavData->GetWorld() : nullptr; }
 
 private:
-	typedef FAsyncTask<FNavGridBuildTask> FGNAsyncBuildTask;
+	typedef FAsyncTask<FNavGridBuildTask> FAsyncBuildTask;
 	
 	ANavigationGridData* LinkedNavData = nullptr;
-	TUniquePtr<FGNAsyncBuildTask> CurrentBuildTask = nullptr;
+	TUniquePtr<FAsyncBuildTask> CurrentBuildTask = nullptr;
 };
