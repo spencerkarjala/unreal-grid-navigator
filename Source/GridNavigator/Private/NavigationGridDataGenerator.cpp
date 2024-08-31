@@ -113,8 +113,8 @@ int32 FNavigationGridDataGenerator::GetNumRunningBuildTasks() const
 
 void FNavigationGridDataGenerator::HandleBuildCompleted() const
 {
-	UE_LOG(LogNavigationGridDataGenerator, Log, TEXT("Trying to access DebugRenderingComponent for object %s at address %p"), *LinkedNavData->GetPathName(), LinkedNavData);
 	if (LinkedNavData != nullptr && LinkedNavData->RenderingComp) {
 		LinkedNavData->RenderingComp->MarkRenderStateDirty();
 	}
+	UE_LOG(LogNavigationGridDataGenerator, Log, TEXT("Completed build for navigation data: %s"), *LinkedNavData->GetPathName());
 }

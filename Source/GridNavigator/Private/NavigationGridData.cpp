@@ -32,7 +32,7 @@ void ANavigationGridData::RebuildDirtyAreas(const TArray<FNavigationDirtyArea>& 
 
 UPrimitiveComponent* ANavigationGridData::ConstructRenderingComponent()
 {
-	return  NewObject<UNavGridRenderingComponent>(this, TEXT("NavGridRenderingComponent"), RF_Transient);
+	return NewObject<UNavGridRenderingComponent>(this, TEXT("NavGridRenderingComponent"), RF_Transient);
 }
 
 FBox ANavigationGridData::GetBounds() const
