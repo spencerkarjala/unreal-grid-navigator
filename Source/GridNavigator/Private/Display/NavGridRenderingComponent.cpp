@@ -87,11 +87,6 @@ FDebugRenderSceneProxy* UNavGridRenderingComponent::CreateDebugSceneProxy()
 		FColor BoxColor(0, 255, 0);
 		
 		for (const auto& [InNodeID, OutNodeID, EdgeType, EdgeDirection] : Node.OutEdges) {
-			// const auto& InNodeResult = MapServer.GetNode(InNodeID);   // should never fail
-			// const auto& OutNodeResult = MapServer.GetNode(OutNodeID); // can fail if something else has broken
-			//
-			// check(InNodeResult.has_value() && InNodeResult->get() == Node);
-
 			FColor LineColor;
 			switch(EdgeType) {
 			case NavGrid::EMapEdgeType::None:
@@ -111,11 +106,6 @@ FDebugRenderSceneProxy* UNavGridRenderingComponent::CreateDebugSceneProxy()
 			default:
 				LineColor = FColor(255, 0, 0);
 			}
-			
-			// if (!OutNodeResult.has_value()) {
-			// 	LineColor = FColor(255, 0, 0);
-			// 	BoxColor = FColor(255, 0, 0);
-			// }
 
 			const FIntVector3 InNodeIndex(Node.X, Node.Y, Node.Layer);
 			const FVector InNodeWorldPos = GridNavigatorConfig::GridIndexToWorld(InNodeIndex);
