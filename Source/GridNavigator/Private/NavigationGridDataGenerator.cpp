@@ -76,10 +76,6 @@ void FNavigationGridDataGenerator::RebuildDirtyAreas(const TArray<FNavigationDir
 		}
 	}
 
-	if (RegisteredBoundsForThisData.Num() == 0) {
-		return;
-	} 
-
 	for (const auto& [UniqueID, AreaBox, SupportedAgents, Level] : RegisteredBoundsForThisData) {
 		const auto* BlockData = LinkedNavData->LevelData->GetBlock(UniqueID);
 
@@ -90,6 +86,26 @@ void FNavigationGridDataGenerator::RebuildDirtyAreas(const TArray<FNavigationDir
 
 		if (!BlockData->Bounds.Equals(AreaBox, 0.001)) {
 			LinkedNavData->LevelData->UpdateBlock(UniqueID, FNavGridBlock(AreaBox));
+		}
+	}
+
+	// determine whether a nav volume has been deleted
+	// first, get a list of all of the existing level blocks
+	TMap<uint32, bool> BoundIsRegistered;
+	for (const auto& [LevelBlockID, Value] : LinkedNavData->LevelData->Blocks) {
+		BoundIsRegistered.Add(LevelBlockID, false);
+	}
+
+	// now, cross-reference against the registered bounds
+	for (const auto& RegisteredBound : RegisteredBoundsForThisData) {
+		BoundIsRegistered[RegisteredBound.UniqueID] = true;
+	}
+
+	// if any bounds weren't matched in previous step, they must have been deleted
+	for (const auto& [LevelBlockID, IsBlockRegistered] : BoundIsRegistered) {
+		if (!IsBlockRegistered) {
+			UE_LOG(LogNavigationGridDataGenerator, Log, TEXT("Found unregistered navigation block '%u'; removing its level data"), LevelBlockID);
+			LinkedNavData->LevelData->RemoveBlock(LevelBlockID);
 		}
 	}
 

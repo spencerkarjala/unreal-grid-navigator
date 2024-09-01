@@ -66,6 +66,14 @@ struct FNavGridLevel
 	FORCEINLINE void UpdateBlock(const uint32 ID, FNavGridBlock&& Block) { Blocks[ID] = Block; }
 
 	/**
+	 * @brief Removes the data for a navigation block associated with a particular ID.
+	 * 
+	 * @param ID UniqueID (from FNavigationBounds) that identifies the block/nav bound
+	 * @note Assumes that ID is present in the list of blocks.
+	 */
+	FORCEINLINE void RemoveBlock(const uint32 ID) { Blocks.Remove(ID); }
+
+	/**
 	 * @brief Retrieves a string that summarizes the data currently stored by the level.
 	 * 
 	 * @return A string summarizing the level's data content
