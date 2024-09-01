@@ -3,6 +3,7 @@
 #include "GridNavigatorConfig.h"
 #include "NavigationGridData.h"
 #include "Display/NavGridSceneProxy.h"
+#include "MapData/NavGridAdjacencyListTypes.h"
 #include "NavMesh/NavMeshRenderingComponent.h"
 
 DECLARE_LOG_CATEGORY_CLASS(LogNavGridRenderingComponent, Log, All);
@@ -107,6 +108,8 @@ FDebugRenderSceneProxy* UNavGridRenderingComponent::CreateDebugSceneProxy()
 			case NavGrid::EMapEdgeType::Cliff:
 				LineColor = FColor(70, 0, 70);
 				break;
+			default:
+				LineColor = FColor(255, 0, 0);
 			}
 			
 			// if (!OutNodeResult.has_value()) {

@@ -28,8 +28,9 @@ void FNavGridBuildTask::DoWork() const
 	}
 
 	const auto LevelData = DataRef->GetLevelData();
+	LevelData->Map.Clear();
 	for (auto& [ID, Block] : LevelData->Blocks) {
-		PopulateBlock(*WorldRef, Block);
+		PopulateBlock(*WorldRef, LevelData->Map, Block.Bounds);
 	}
 
 	auto Result = OnCompleted.ExecuteIfBound();
@@ -76,13 +77,10 @@ bool IsRoughlyEqual(const float Lhs, const float Rhs, const float Tolerance)
 	return FMath::Abs(Lhs - Rhs) < Tolerance;
 }
 
-void FNavGridBuildTask::PopulateBlock(const UWorld& World, FNavGridBlock& Block)
+void FNavGridBuildTask::PopulateBlock(const UWorld& World, FNavGridAdjacencyList& Map, const FBox& BoundingBox)
 {
 	const TArray<TPair<int, int>> Neighbors = {{1, 0}, {1, 1},{0, 1},{-1, 1},{-1, 0},{-1, -1},{0, -1},{1, -1} };
 	
-	const auto& BoundingBox = Block.Bounds;
-	auto& Map = Block.Data;
-
 	const int MinX = FMath::RoundToInt(BoundingBox.Min.X / 100.0);
 	const int MinY = FMath::RoundToInt(BoundingBox.Min.Y / 100.0);
 	const int MinZ = FMath::RoundToInt(BoundingBox.Min.Z / 25.0);
@@ -108,9 +106,11 @@ void FNavGridBuildTask::PopulateBlock(const UWorld& World, FNavGridBlock& Block)
 			if (bShortRoofOverHitPoint && FMath::Abs(CeilHitResult.Normal.Z) > 0.1) {
 				continue;
 			}
-			
-			Map.AddNode(i, j, Layer, HitResult.Location.Z);
-			UE_LOG(LogNavGridBuildTask, Verbose, TEXT("Added new node to nav grid at indices (%d, %d, %d)"), i, j, Layer);
+
+			if (!Map.HasNode(i, j, Layer)) {
+				Map.AddNode(i, j, Layer, HitResult.Location.Z);
+				UE_LOG(LogNavGridBuildTask, Verbose, TEXT("Added new node to nav grid at indices (%d, %d, %d)"), i, j, Layer);
+			}
 
 			for (const auto& [NeighborI, NeighborJ] : Neighbors) {
 				FHitResult NeighborHitResult(ForceInit);

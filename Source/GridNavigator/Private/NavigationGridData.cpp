@@ -103,12 +103,7 @@ TArray<NavGrid::FNode> ANavigationGridData::GetNodeList() const
 	if (!LevelData) {
 		return {};
 	}
-	
-	TArray<NavGrid::FNode> Nodes;
-	for (auto& [ID, Block] : LevelData->Blocks) {
-		Nodes.Append(Block.Data.GetNodeList());
-	}
-	return Nodes;
+	return LevelData->Map.GetNodeList();
 }
 
 FNavGridLevel& ANavigationGridData::GetLevelDataBlueprint() const

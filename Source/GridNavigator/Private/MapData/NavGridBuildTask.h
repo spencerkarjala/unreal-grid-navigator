@@ -12,7 +12,7 @@ public:
 	FORCEINLINE bool CanAbandon() const;
 
 	void DoWork() const;
-	static void PopulateBlock(const UWorld& World, FNavGridBlock& Block);
+	static void PopulateBlock(const UWorld& World, FNavGridAdjacencyList& Map, const FBox& BoundingBox);
 
 	FNavGridBuildTaskDelegate OnCompleted;
 

@@ -90,4 +90,5 @@ struct FNavGridLevel
 	TArray<FVector> FindPath(const FVector& From, const FVector& To);
 
 	TMap<uint32, FNavGridBlock> Blocks;
+	FNavGridAdjacencyList Map;
 };
