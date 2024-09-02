@@ -33,9 +33,7 @@ struct FNavGridLevel
 	FORCEINLINE TArray<FNavGridBlock> GetBlocks() const
 	{
 		TArray<FNavGridBlock> Result;
-		for (const auto [ID, Block] : Blocks) {
-			Result.Push(Block);
-		}
+		Blocks.GenerateValueArray(Result);
 		return Result;
 	}
 
