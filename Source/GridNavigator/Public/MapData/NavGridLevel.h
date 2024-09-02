@@ -15,7 +15,10 @@ struct FNavGridLevel
 	 * @param ID UniqueID (from FNavigationBounds) that identifies the block/nav bound
 	 * @return \c true if level has a block corresponding to ID; \c false otherwise
 	 */
-	FORCEINLINE bool HasBlockWithID(const uint32 ID) const { return Blocks.Contains(ID); }
+	FORCEINLINE bool HasBlockWithID(const uint32 ID) const
+	{
+		return Blocks.Contains(ID);
+	}
 
 	/**
 	 * @brief Returns a navigation block associated with a particular ID.
@@ -23,7 +26,10 @@ struct FNavGridLevel
 	 * @param ID UniqueID (from FNavigationBounds) that identifies the block/nav bound
 	 * @return The \c FNavGridBlock associated with ID
 	 */
-	FORCEINLINE FNavGridBlock const* GetBlock(const uint32 ID) const { return Blocks.Find(ID); }
+	FORCEINLINE FNavGridBlock const* GetBlock(const uint32 ID) const
+	{
+		return Blocks.Find(ID);
+	}
 
 	/**
 	 * @brief Returns all of the currently-stored navigation data blocks.
@@ -45,7 +51,10 @@ struct FNavGridLevel
 	 *
 	 * @note Does not check whether the entry exists; check with HasBlockWithID first.
 	 */
-	FORCEINLINE const FNavGridBlock& GetBlockChecked(const uint32 ID) const { return Blocks.FindChecked(ID); }
+	FORCEINLINE const FNavGridBlock& GetBlockChecked(const uint32 ID) const
+	{
+		return Blocks.FindChecked(ID);
+	}
 
 	/**
 	 * @brief Adds a new navigation block block associated with a particular ID.
@@ -53,7 +62,10 @@ struct FNavGridLevel
 	 * @param ID UniqueID (from FNavigationBounds) that identifies the block/nav bound
 	 * @param Block New block data associated with UniqueID
 	 */
-	FORCEINLINE void AddBlock(const uint32 ID, FNavGridBlock&& Block) { Blocks.Add(ID, Block); }
+	FORCEINLINE void AddBlock(const uint32 ID, FNavGridBlock&& Block)
+	{
+		Blocks.Add(ID, Block);
+	}
 
 	/**
 	 * @brief Updates the data for a navigation block associated with a particular ID.
@@ -61,7 +73,10 @@ struct FNavGridLevel
 	 * @param ID UniqueID (from FNavigationBounds) that identifies the block/nav bound
 	 * @param Block New block data associated with UniqueID
 	 */
-	FORCEINLINE void UpdateBlock(const uint32 ID, FNavGridBlock&& Block) { Blocks[ID] = Block; }
+	FORCEINLINE void UpdateBlock(const uint32 ID, FNavGridBlock&& Block)
+	{
+		Blocks[ID] = Block;
+	}
 
 	/**
 	 * @brief Removes the data for a navigation block associated with a particular ID.
@@ -69,7 +84,10 @@ struct FNavGridLevel
 	 * @param ID UniqueID (from FNavigationBounds) that identifies the block/nav bound
 	 * @note Assumes that ID is present in the list of blocks.
 	 */
-	FORCEINLINE void RemoveBlock(const uint32 ID) { Blocks.Remove(ID); }
+	FORCEINLINE void RemoveBlock(const uint32 ID)
+	{
+		Blocks.Remove(ID);
+	}
 
 	/**
 	 * @brief Retrieves a string that summarizes the data currently stored by the level.
@@ -79,12 +97,19 @@ struct FNavGridLevel
 	FString ToString() const;
 
 	/**
-	 * @brief Retrieves the bounding box for the stored navigation data
+	 * @brief Retrieves the bounding box for the stored navigation data.
 	 * 
 	 * @return The smallest \c FBox that contains all navigation data
 	 */
 	FBox GetBounds() const;
 
+	/**
+	 * @brief Performs pathfinding on saved map grid data between two points.
+	 * 
+	 * @param From World coordinate to pathfind from
+	 * @param To World coordinate to pathfind to
+	 * @return An array of world coordinates that comprise a path between From and To
+	 */
 	TArray<FVector> FindPath(const FVector& From, const FVector& To);
 
 	TMap<uint32, FNavGridBlock> Blocks;
