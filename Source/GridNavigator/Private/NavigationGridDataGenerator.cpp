@@ -80,12 +80,12 @@ void FNavigationGridDataGenerator::RebuildDirtyAreas(const TArray<FNavigationDir
 		const auto* BlockData = LinkedNavData->LevelData->GetBlock(UniqueID);
 
 		if (BlockData == nullptr) {
-			LinkedNavData->LevelData->AddBlock(UniqueID, FNavGridBlock(AreaBox));
+			LinkedNavData->LevelData->AddBlock(UniqueID, FNavGridBlock(AreaBox, UniqueID));
 			continue;
 		}
 
 		if (!BlockData->Bounds.Equals(AreaBox, 0.001)) {
-			LinkedNavData->LevelData->UpdateBlock(UniqueID, FNavGridBlock(AreaBox));
+			LinkedNavData->LevelData->UpdateBlock(UniqueID, FNavGridBlock(AreaBox, UniqueID));
 		}
 	}
 

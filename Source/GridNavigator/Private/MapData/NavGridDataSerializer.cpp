@@ -9,6 +9,7 @@ void operator<<(FArchive& Archive, FNavGridAdjacencyList& Data)
 
 void operator<<(FArchive& Archive, FNavGridBlock& Data)
 {
+	Archive << Data.ID;
 	Archive << Data.Bounds;
 }
 

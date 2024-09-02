@@ -10,10 +10,11 @@ struct FNavGridBlock
 	GENERATED_BODY()
 	
 	FNavGridBlock() {}
-	explicit FNavGridBlock(const FBox& NewBounds) : Bounds(NewBounds) {}
+	explicit FNavGridBlock(const FBox& NewBounds, const uint32 NewID) : Bounds(NewBounds), ID(NewID) {}
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FBox Bounds;
 
 	FNavGridAdjacencyList Data;
+	uint32 ID = 0;
 };
