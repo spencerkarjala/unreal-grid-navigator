@@ -19,16 +19,16 @@ namespace NavGrid
 		typedef int64 ID;
 
 		FNode();
-		FNode(const int32 NewX, const int32 NewY, const int32 NewLayer, const float NewHeight);
+		FNode(const int32 NewX, const int32 NewY, const int32 NewZ, const float NewHeight);
 			
-		int32 X, Y, Layer;
+		int32 X, Y, Z;
 		float Height;
 		TArray<FEdge> OutEdges;
 
 		// serialization/deserialization
 		friend FArchive& operator<<(FArchive& Ar, FNode& Rhs)
 		{
-			Ar << Rhs.X << Rhs.Y << Rhs.Layer << Rhs.Height << Rhs.OutEdges;
+			Ar << Rhs.X << Rhs.Y << Rhs.Z << Rhs.Height << Rhs.OutEdges;
 			return Ar;
 		}
 		

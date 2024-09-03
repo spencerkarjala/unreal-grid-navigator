@@ -3,13 +3,13 @@
 namespace NavGrid
 {
 	FNode::FNode()
-		: X(0), Y(0), Layer(0), Height(0.0) {}
-	FNode::FNode(const int32 NewX, const int32 NewY, const int32 NewLayer, const float NewHeight)
-		: X(NewX), Y(NewY), Layer(NewLayer), Height(NewHeight) {}
+		: X(0), Y(0), Z(0), Height(0.0) {}
+	FNode::FNode(const int32 NewX, const int32 NewY, const int32 NewZ, const float NewHeight)
+		: X(NewX), Y(NewY), Z(NewZ), Height(NewHeight) {}
 
 	bool FNode::operator==(const FNode& Rhs) const
 	{
-		return X == Rhs.X && Y == Rhs.Y && Layer == Rhs.Layer;
+		return X == Rhs.X && Y == Rhs.Y && Z == Rhs.Z;
 	}
 			
 	FEdge::FEdge()

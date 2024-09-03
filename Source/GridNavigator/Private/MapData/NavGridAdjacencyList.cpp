@@ -1,4 +1,5 @@
 #include "NavGridAdjacencyList.h"
+#include "AStarNavigator.h"
 #include "PriorityQueue.h"
 
 #include <functional>
@@ -6,15 +7,15 @@
 
 DECLARE_LOG_CATEGORY_CLASS(LogMapAdjacencyList, Log, All)
 
-bool FNavGridAdjacencyList::HasNode(const int QueryX, const int QueryY, const int QueryLayer) const
+bool FNavGridAdjacencyList::HasNode(const int QueryX, const int QueryY, const int QueryZ) const
 {
-	const NavGrid::FNode::ID id = this->GetNodeId(QueryX, QueryY, QueryLayer);
+	const NavGrid::FNode::ID id = this->GetNodeId(QueryX, QueryY, QueryZ);
 	return Nodes.Contains(id);
 }
 
-void FNavGridAdjacencyList::AddNode(int X, int Y, int Layer, float Height)
+void FNavGridAdjacencyList::AddNode(int X, int Y, int Z, float Height)
 {
-	this->Nodes.Emplace(GetNodeId(X, Y, Layer), NavGrid::FNode(X, Y, Layer, Height));
+	this->Nodes.Emplace(GetNodeId(X, Y, Z), NavGrid::FNode(X, Y, Z, Height));
 }
 
 TArray<NavGrid::FNode> FNavGridAdjacencyList::GetNodeList()
@@ -35,16 +36,16 @@ TArray<NavGrid::FEdge> FNavGridAdjacencyList::GetEdgeList()
 	return Output;
 }
 
-void FNavGridAdjacencyList::CreateEdge(int FromX, int FromY, int FromLayer, float FromHeight, int ToX, int ToY, int ToLayer, float ToHeight, NavGrid::EMapEdgeType EdgeType)
+void FNavGridAdjacencyList::CreateEdge(int FromX, int FromY, int FromZ, float FromHeight, int ToX, int ToY, int ToZ, float ToHeight, NavGrid::EMapEdgeType EdgeType)
 {
-	if (!this->HasNode(FromX, FromY, FromLayer)) {
-		this->AddNode(FromX, FromY, FromLayer, FromHeight);
+	if (!this->HasNode(FromX, FromY, FromZ)) {
+		this->AddNode(FromX, FromY, FromZ, FromHeight);
 	}
 
-	NavGrid::FNode::ID FromId = GetNodeId(FromX, FromY, FromLayer);
-	NavGrid::FNode::ID ToId   = GetNodeId(ToX, ToY, ToLayer);
+	NavGrid::FNode::ID FromId = GetNodeId(FromX, FromY, FromZ);
+	NavGrid::FNode::ID ToId   = GetNodeId(ToX, ToY, ToZ);
 
-	const FVector Direction(ToX - FromX, ToY - FromY, ToLayer - FromLayer);
+	const FVector Direction(ToX - FromX, ToY - FromY, ToZ - FromZ);
 
 	Nodes[FromId].OutEdges.Emplace(FromId, ToId, EdgeType, Direction);
 }
@@ -61,14 +62,14 @@ FString FNavGridAdjacencyList::Stringify()
 	Output.Append(TEXT("Map has structure:\r\n"));
 
 	for (const auto& [Id, Node] : this->Nodes) {
-		Output.Appendf(TEXT("\tID %d = (%d, %d) on layer %d and with outward edges:\r\n"), Id, Node.X, Node.Y, Node.Layer);
+		Output.Appendf(TEXT("\tID %d = (%d, %d) on layer %d and with outward edges:\r\n"), Id, Node.X, Node.Y, Node.Z);
 		for (const auto& [InId, OutId, Type, Direction] : Node.OutEdges) {
 			const NavGrid::FNode& In = Nodes[InId];
 			const NavGrid::FNode& Out = Nodes[OutId];
 			Output.Appendf(
 				TEXT("\t\tID %d: (%d, %d) L%d H%0.2f -> ID %d: (%d, %d)  L %d  H %0.2f | Dir: (%0.2f, %0.2f, %0.2f)\r\n"),
-				InId,  In.X,  In.Y,  In.Layer,  In.Height,
-				OutId, Out.X, Out.Y, Out.Layer, Out.Height,
+				InId,  In.X,  In.Y,  In.Z,  In.Height,
+				OutId, Out.X, Out.Y, Out.Z, Out.Height,
 				Direction.X, Direction.Y, Direction.Z
 			);
 		}
@@ -122,6 +123,8 @@ TArray<FVector> FNavGridAdjacencyList::FindPath(const FIntVector3& From, const F
 		return FVector::Distance(LhsNoHeight, RhsNoHeight);
 	};
 
+	typedef FAStarNavigator<NavGrid::FNode>::FNode FAStarNode;
+
 	TPriorityQueue<FAStarNode*> OpenSet;
 	TMap<const NavGrid::FNode*, double> CostSoFar;
 	TArray<FAStarNode*> NodesToFree;
@@ -137,11 +140,13 @@ TArray<FVector> FNavGridAdjacencyList::FindPath(const FIntVector3& From, const F
 		return TArray<FVector>();
 	}
 
+	FAStarNavigator<NavGrid::FNode>::Navigate(StartNodeResult->get(), EndNodeResult->get());
+
 	const auto& StartNode = StartNodeResult->get();
 	const auto& EndNode   = EndNodeResult->get();
 
-	FVector StartLocation(StartNode.X, StartNode.Y, StartNode.Layer);
-	FVector EndLocation  (EndNode.X,   EndNode.Y,   EndNode.Layer);
+	FVector StartLocation(StartNode.X, StartNode.Y, StartNode.Z);
+	FVector EndLocation  (EndNode.X,   EndNode.Y,   EndNode.Z);
 	
 	FAStarNode* FromAStarNode = new FAStarNode({ nullptr, StartLocation, 0.0, NavGrid::EMapEdgeType::None });
 	NodesToFree.Push(FromAStarNode);
@@ -187,7 +192,7 @@ TArray<FVector> FNavGridAdjacencyList::FindPath(const FIntVector3& From, const F
 
 			check(&CurrNode == &InNode);
 
-			const FVector NeighborLocation = FVector(OutNode.X, OutNode.Y, OutNode.Layer);
+			const FVector NeighborLocation = FVector(OutNode.X, OutNode.Y, OutNode.Z);
 
 			const double NeighborCost = CurrCost + Heuristic(CurrLocation, NeighborLocation);
 
@@ -269,10 +274,10 @@ TArray<FVector> FNavGridAdjacencyList::FindPath(const FIntVector3& From, const F
 	return Path;
 }
 
-NavGrid::FNode::ID FNavGridAdjacencyList::GetNodeId(const int64 X, const int64 Y, const int64 Layer)
+NavGrid::FNode::ID FNavGridAdjacencyList::GetNodeId(const int64 X, const int64 Y, const int64 Z)
 {
 	return (
-		Layer * AssumedMaxRows * AssumedMaxLayers
+		Z * AssumedMaxRows * AssumedMaxLayers
 		  + Y * AssumedMaxRows
 		  + X
 	);
@@ -280,12 +285,12 @@ NavGrid::FNode::ID FNavGridAdjacencyList::GetNodeId(const int64 X, const int64 Y
 
 NavGrid::FNode::ID FNavGridAdjacencyList::GetNodeId(const NavGrid::FNode& Node)
 {
-	return GetNodeId(Node.X, Node.Y, Node.Layer);
+	return GetNodeId(Node.X, Node.Y, Node.Z);
 }
 
-std::optional<std::reference_wrapper<const NavGrid::FNode>> FNavGridAdjacencyList::GetNode(const int64 X, const int64 Y, const int64 Layer)
+std::optional<std::reference_wrapper<const NavGrid::FNode>> FNavGridAdjacencyList::GetNode(const int64 X, const int64 Y, const int64 Z)
 {
-	const NavGrid::FNode::ID Id = GetNodeId(X, Y, Layer);
+	const NavGrid::FNode::ID Id = GetNodeId(X, Y, Z);
 	if (!Nodes.Contains(Id)) {
 		return std::nullopt;
 	}

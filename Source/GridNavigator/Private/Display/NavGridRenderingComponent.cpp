@@ -80,7 +80,7 @@ FDebugRenderSceneProxy* UNavGridRenderingComponent::CreateDebugSceneProxy()
 	const auto NodeList = NavGrid->GetNodeList();
 	
 	for (const auto& Node : NodeList) {
-		const FVector BoxPos(Node.X * 100.00, Node.Y * 100.0, Node.Layer * 25.0);
+		const FVector BoxPos(Node.X * 100.00, Node.Y * 100.0, Node.Z * 25.0);
 		const FVector BoxDiagonal(2.5, 2.5, 2.5);
 
 		const FBox BoxDims(BoxPos - BoxDiagonal, BoxPos + BoxDiagonal);
@@ -107,10 +107,10 @@ FDebugRenderSceneProxy* UNavGridRenderingComponent::CreateDebugSceneProxy()
 				LineColor = FColor(255, 0, 0);
 			}
 
-			const FIntVector3 InNodeIndex(Node.X, Node.Y, Node.Layer);
+			const FIntVector3 InNodeIndex(Node.X, Node.Y, Node.Z);
 			const FVector InNodeWorldPos = GridNavigatorConfig::GridIndexToWorld(InNodeIndex);
 
-			const FIntVector3 OutNodeIndex(Node.X + EdgeDirection.X, Node.Y + EdgeDirection.Y, Node.Layer + EdgeDirection.Z);
+			const FIntVector3 OutNodeIndex(Node.X + EdgeDirection.X, Node.Y + EdgeDirection.Y, Node.Z + EdgeDirection.Z);
 			const FVector OutNodeWorldPos = GridNavigatorConfig::GridIndexToWorld(OutNodeIndex);
 
 			// slight offset so arrows don't all start and end in the same place; increases readability

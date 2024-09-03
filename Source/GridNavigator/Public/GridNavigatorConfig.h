@@ -6,9 +6,9 @@ public:
 	static constexpr double MinHeightForValidNode = 125.0;
 	static constexpr double GridSizeX = 100.0;
 	static constexpr double GridSizeY = 100.0;
-	static constexpr double GridSizeLayer = 25.0;
+	static constexpr double GridSizeZ = 25.0;
 	
-	static constexpr double MinEmptyLayersForValidNode = MinHeightForValidNode / GridSizeLayer;
+	static constexpr double MinEmptyLayersForValidNode = MinHeightForValidNode / GridSizeZ;
 
 	static constexpr float ASSUMED_GRID_SPACING = 100.0;
 
@@ -25,7 +25,7 @@ public:
 		return FIntVector3(
 			FMath::RoundToInt(WorldCoord.X / static_cast<float>(GridNavigatorConfig::GridSizeX)),
 			FMath::RoundToInt(WorldCoord.Y / static_cast<float>(GridNavigatorConfig::GridSizeY)),
-			FMath::RoundToInt(WorldCoord.Z / static_cast<float>(GridNavigatorConfig::GridSizeLayer))
+			FMath::RoundToInt(WorldCoord.Z / static_cast<float>(GridNavigatorConfig::GridSizeZ))
 		);
 	}
 
@@ -50,7 +50,7 @@ public:
 		return FVector(
 			static_cast<float>(IndexCoord.X) * static_cast<float>(GridNavigatorConfig::GridSizeX),
 			static_cast<float>(IndexCoord.Y) * static_cast<float>(GridNavigatorConfig::GridSizeY),
-			static_cast<float>(IndexCoord.Z) * static_cast<float>(GridNavigatorConfig::GridSizeLayer)
+			static_cast<float>(IndexCoord.Z) * static_cast<float>(GridNavigatorConfig::GridSizeZ)
 		);
 	}
 
@@ -59,7 +59,7 @@ public:
 		return FVector(
 			static_cast<float>(IndexCoord.X) * static_cast<float>(GridNavigatorConfig::GridSizeX),
 			static_cast<float>(IndexCoord.Y) * static_cast<float>(GridNavigatorConfig::GridSizeY),
-			static_cast<float>(IndexCoord.Z) * static_cast<float>(GridNavigatorConfig::GridSizeLayer)
+			static_cast<float>(IndexCoord.Z) * static_cast<float>(GridNavigatorConfig::GridSizeZ)
 		);
 	}
 	

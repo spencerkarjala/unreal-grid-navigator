@@ -98,8 +98,8 @@ void FNavGridBuildTask::PopulateBlock(const UWorld& World, FNavGridAdjacencyList
 			}
 
 			FHitResult CeilHitResult(ForceInit);
-			const int Layer = FMath::RoundToInt(HitResult.Location.Z / 25.0);
-			const bool bShortRoofOverHitPoint = FloorTrace(i, j, Layer, Layer + GridNavigatorConfig::MinEmptyLayersForValidNode, CeilHitResult, World);
+			const int HitIndexZ = FMath::RoundToInt(HitResult.Location.Z / 25.0);
+			const bool bShortRoofOverHitPoint = FloorTrace(i, j, HitIndexZ, HitIndexZ + GridNavigatorConfig::MinEmptyLayersForValidNode, CeilHitResult, World);
 
 			// end loop if there's nowhere to stand; also, ignore walls that might be directly
 			// on top of the node (ie. have a near-zero Z component for normal vector)
@@ -107,9 +107,9 @@ void FNavGridBuildTask::PopulateBlock(const UWorld& World, FNavGridAdjacencyList
 				continue;
 			}
 
-			if (!Map.HasNode(i, j, Layer)) {
-				Map.AddNode(i, j, Layer, HitResult.Location.Z);
-				UE_LOG(LogNavGridBuildTask, Verbose, TEXT("Added new node to nav grid at indices (%d, %d, %d)"), i, j, Layer);
+			if (!Map.HasNode(i, j, HitIndexZ)) {
+				Map.AddNode(i, j, HitIndexZ, HitResult.Location.Z);
+				UE_LOG(LogNavGridBuildTask, Verbose, TEXT("Added new node to nav grid at indices (%d, %d, %d)"), i, j, HitIndexZ);
 			}
 
 			for (const auto& [NeighborI, NeighborJ] : Neighbors) {
@@ -236,12 +236,12 @@ void FNavGridBuildTask::PopulateBlock(const UWorld& World, FNavGridAdjacencyList
 					}
 				}
 
-				const int FromLayer = FMath::RoundToInt(NodeHeight / 25.0);
-				const int ToLayer   = FMath::RoundToInt(NeighborHeight /  25.0);
+				const int FromZ = FMath::RoundToInt(NodeHeight / 25.0);
+				const int ToZ   = FMath::RoundToInt(NeighborHeight /  25.0);
 			
 				Map.CreateEdge(
-					i,             j,             FromLayer, NodeHeight,
-					i + NeighborI, j + NeighborJ, ToLayer,   NeighborHeight,
+					i,             j,             FromZ, NodeHeight,
+					i + NeighborI, j + NeighborJ, ToZ,   NeighborHeight,
 					EdgeType
 				);
 			}
