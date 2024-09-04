@@ -1,11 +1,20 @@
 #include "NavGridAdjacencyList.h"
-#include "AStarNavigator.h"
-#include "PriorityQueue.h"
 
 #include <functional>
 #include <optional>
 
-DECLARE_LOG_CATEGORY_CLASS(LogMapAdjacencyList, Log, All)
+#include "Navigation/AStarNavigator.h"
+
+DECLARE_LOG_CATEGORY_CLASS(LogNavGridAdjacencyList, Log, All)
+
+std::optional<std::reference_wrapper<const NavGrid::FNode>> FNavGridAdjacencyList::GetNode(const int64 X, const int64 Y, const int64 Z) const
+{
+	const NavGrid::FNode::ID Id = GetNodeId(X, Y, Z);
+	if (!Nodes.Contains(Id)) {
+		return std::nullopt;
+	}
+	return Nodes[Id];
+}
 
 bool FNavGridAdjacencyList::HasNode(const int QueryX, const int QueryY, const int QueryZ) const
 {
@@ -16,6 +25,25 @@ bool FNavGridAdjacencyList::HasNode(const int QueryX, const int QueryY, const in
 void FNavGridAdjacencyList::AddNode(int X, int Y, int Z, float Height)
 {
 	this->Nodes.Emplace(GetNodeId(X, Y, Z), NavGrid::FNode(X, Y, Z, Height));
+}
+
+TArray<FVector> FNavGridAdjacencyList::GetReachableNeighbors(const int64 X, const int64 Y, const int64 Z) const
+{
+	const auto NodeResult = GetNode(X, Y, Z);
+	if (!NodeResult.has_value()) {
+		return {};
+	}
+	const auto Node = NodeResult->get();
+
+	TArray<FVector> Result;
+	for (const auto& Edge : Node.OutEdges) {
+		if (Edge.Type != NavGrid::Direct && Edge.Type != NavGrid::Slope && Edge.Type != NavGrid::SlopeBottom && Edge.Type != NavGrid::SlopeTop) {
+			continue;
+		}
+		const auto& Neighbor = Nodes[Edge.OutID];
+		Result.Emplace(Neighbor.X, Neighbor.Y, Neighbor.Z);
+	}
+	return Result;
 }
 
 TArray<NavGrid::FNode> FNavGridAdjacencyList::GetNodeList()
@@ -48,6 +76,15 @@ void FNavGridAdjacencyList::CreateEdge(int FromX, int FromY, int FromZ, float Fr
 	const FVector Direction(ToX - FromX, ToY - FromY, ToZ - FromZ);
 
 	Nodes[FromId].OutEdges.Emplace(FromId, ToId, EdgeType, Direction);
+}
+
+bool FNavGridAdjacencyList::IsEdgeTraversable(const NavGrid::FEdge& Edge) const
+{
+	const bool IsTraversableType = Edge.Type == NavGrid::Direct || Edge.Type == NavGrid::Slope || Edge.Type == NavGrid::SlopeBottom || Edge.Type == NavGrid::SlopeTop;
+	const bool IsSourceNodeValid = Nodes.Contains(Edge.InID);
+	const bool IsTargetNodeValid = Nodes.Contains(Edge.OutID);
+
+	return IsTraversableType && IsSourceNodeValid && IsTargetNodeValid;
 }
 
 void FNavGridAdjacencyList::Clear()
@@ -106,131 +143,59 @@ void FNavGridAdjacencyList::DrawDebug(const UWorld& World)
 	}
 }
 
-struct FAStarNode
-{
-	FAStarNode* PrevNode;
-	FVector Location;
-	double GCost;
-	NavGrid::EMapEdgeType InboundEdgeType;
-};
-
 TArray<FVector> FNavGridAdjacencyList::FindPath(const FIntVector3& From, const FIntVector3& To) {
 	const std::function Heuristic = [this](const FVector& Lhs, const FVector& Rhs) -> double
 	{
 		// ignore height since we only care about grid coordinates
-		const FVector LhsNoHeight(Lhs.X, Lhs.Y, 0.0);
-		const FVector RhsNoHeight(Rhs.X, Rhs.Y, 0.0);
-		return FVector::Distance(LhsNoHeight, RhsNoHeight);
+		return FMath::Sqrt((Rhs.Y-Lhs.Y)*(Rhs.Y-Lhs.Y) + (Rhs.X-Lhs.X)*(Rhs.X-Lhs.X));
 	};
-
-	typedef FAStarNavigator<NavGrid::FNode>::FNode FAStarNode;
-
-	TPriorityQueue<FAStarNode*> OpenSet;
-	TMap<const NavGrid::FNode*, double> CostSoFar;
-	TArray<FAStarNode*> NodesToFree;
 
 	if (!this->HasNode(From.X, From.Y, From.Z) || !this->HasNode(To.X, To.Y, To.Z)) {
 		return TArray<FVector>();
 	}
 
 	const auto StartNodeResult = GetNode(From.X, From.Y, From.Z);
-	const auto EndNodeResult   = GetNode(To.X,   To.Y,   To.Z);
+	const auto FinalNodeResult = GetNode(To.X,   To.Y,   To.Z);
 
-	if (!StartNodeResult.has_value() || !EndNodeResult.has_value()) {
+	if (!StartNodeResult.has_value() || !FinalNodeResult.has_value()) {
 		return TArray<FVector>();
 	}
 
-	FAStarNavigator<NavGrid::FNode>::Navigate(StartNodeResult->get(), EndNodeResult->get());
+	const auto StartNode = StartNodeResult->get();
+	const auto FinalNode = FinalNodeResult->get();
 
-	const auto& StartNode = StartNodeResult->get();
-	const auto& EndNode   = EndNodeResult->get();
+	const FVector StartNodePos(StartNode.X, StartNode.Y, StartNode.Z);
+	const FVector FinalNodePos(FinalNode.X, FinalNode.Y, FinalNode.Z);
 
-	FVector StartLocation(StartNode.X, StartNode.Y, StartNode.Z);
-	FVector EndLocation  (EndNode.X,   EndNode.Y,   EndNode.Z);
-	
-	FAStarNode* FromAStarNode = new FAStarNode({ nullptr, StartLocation, 0.0, NavGrid::EMapEdgeType::None });
-	NodesToFree.Push(FromAStarNode);
-	OpenSet.Push(FromAStarNode, 0);
-	CostSoFar.Add(&StartNode, 0.0);
-	
-	bool IsPathingSuccessful = false;
-	FAStarNode* CurrNodePtr = nullptr;
-	while (!OpenSet.IsEmpty()) {
-		CurrNodePtr = OpenSet.Pop();
-		const auto [PrevNodePtr, CurrLocation, CurrCost, CurrInboundEdgeType] = *CurrNodePtr;
-
-		check(CurrNodePtr != nullptr);
-	
-		if (CurrLocation == EndLocation) {
-			IsPathingSuccessful = true;
-			break;
-		}
-
-		const auto CurrNodeResult = this->GetNode(CurrLocation.X, CurrLocation.Y, CurrLocation.Z);
-		if (!CurrNodeResult.has_value()) {
-			continue;
-		}
-		const auto& CurrNode = CurrNodeResult->get();
-		auto& CurrOutwardEdges = CurrNode.OutEdges;
-
-		for (const auto& Edge : CurrOutwardEdges) {
-			if (Edge.Type != NavGrid::Direct && Edge.Type != NavGrid::Slope && Edge.Type != NavGrid::SlopeBottom && Edge.Type != NavGrid::SlopeTop) {
-				continue;
-			}
-
-			if (!Nodes.Contains(Edge.InID)) {
-				UE_LOG(LogMapAdjacencyList, Error, TEXT("FindPath failed; no input node %lld found for edge (%s)"), Edge.InID, *Edge.ToString());
-				continue;
-			}
-			if (!Nodes.Contains(Edge.OutID)) {
-				UE_LOG(LogMapAdjacencyList, Error, TEXT("FindPath failed; no output node %lld found for edge (%s)"), Edge.OutID, *Edge.ToString());
-				continue;
-			}
-			
-			const NavGrid::FNode& InNode  = this->Nodes[Edge.InID];
-			const NavGrid::FNode& OutNode = this->Nodes[Edge.OutID];
-
-			check(&CurrNode == &InNode);
-
-			const FVector NeighborLocation = FVector(OutNode.X, OutNode.Y, OutNode.Z);
-
-			const double NeighborCost = CurrCost + Heuristic(CurrLocation, NeighborLocation);
-
-			if (!CostSoFar.Contains(&OutNode) || NeighborCost < CostSoFar[&OutNode]) {
-				FAStarNode* NeighborAStarNode = new FAStarNode({ CurrNodePtr, NeighborLocation, NeighborCost, Edge.Type });
-				NodesToFree.Push(NeighborAStarNode);
-				
-				CostSoFar.Add(&OutNode, NeighborCost);
-				const double Priority    = NeighborCost + Heuristic(NeighborLocation, EndLocation);
-				NeighborAStarNode->GCost = Priority;
-				OpenSet.Push(NeighborAStarNode, Priority);
-			}
-		}
-	}
-
-	TArray<TPair<FVector, NavGrid::EMapEdgeType>> PathWithEdgeTypes;
-	if (IsPathingSuccessful) {
-		while (CurrNodePtr != nullptr) {
-			const auto [PrevNodePtr, CurrLocation, CurrCost, InboundEdgeType] = *CurrNodePtr;
-			const FVector NewPathNode(CurrLocation.X, CurrLocation.Y, CurrLocation.Z);
-			PathWithEdgeTypes.Push({ NewPathNode, InboundEdgeType });
-			CurrNodePtr = CurrNodePtr->PrevNode;
-		}
-		Algo::Reverse(PathWithEdgeTypes);
-	}
-
-	for (const FAStarNode* NodePtr : NodesToFree) {
-		delete NodePtr;
+	// perform actual pathfinding
+	TAStarNavigator<FNavGridAdjacencyList, FVector> Navigator;
+	Navigator.Heuristic = Heuristic;
+	TArray<FVector> PathNodes = Navigator.Navigate(*this, StartNodePos, FinalNodePos);
+	if (PathNodes.Num() == 0) {
+		return PathNodes;
 	}
 
 	// adds halfway-between grid points to account for the cases where map
 	// incline changes; ie. tops and bottoms of sloped floors
 	TArray<FVector> UnfilteredPath;
-	for (int i = 1; i < PathWithEdgeTypes.Num(); ++i) {
-		const auto [PointA, ___]        = PathWithEdgeTypes[i-1];
-		const auto [PointB, EdgeTypeAB] = PathWithEdgeTypes[i];
+	for (int i = 1; i < PathNodes.Num(); ++i) {
+		const auto PointA = PathNodes[i-1];
+		const auto PointB = PathNodes[i];
 
 		UnfilteredPath.Add(PointA);
+
+		const auto PointANodeResult = GetNode(PointA.X, PointA.Y, PointA.Z);
+		check(PointANodeResult.has_value());
+		const auto PointANode = PointANodeResult->get();
+
+		const auto PointBID = GetNodeId(PointB.X, PointB.Y, PointB.Z);
+		NavGrid::EMapEdgeType EdgeTypeAB = NavGrid::None;
+		for (const auto& OutEdge : PointANode.OutEdges) {
+			if (OutEdge.OutID == PointBID) {
+				EdgeTypeAB = OutEdge.Type;
+				break;
+			}
+		}
 
 		if (EdgeTypeAB != NavGrid::EMapEdgeType::SlopeBottom && EdgeTypeAB != NavGrid::EMapEdgeType::SlopeTop) {
 			continue;
@@ -239,17 +204,17 @@ TArray<FVector> FNavGridAdjacencyList::FindPath(const FIntVector3& From, const F
 		FVector Midpoint = (PointA + PointB) / 2.0;
 		const float MinHeight = FMath::Min(PointA.Z, PointB.Z);
 		const float MaxHeight = FMath::Max(PointA.Z, PointB.Z);
-
+		
 		Midpoint.Z = (EdgeTypeAB == NavGrid::EMapEdgeType::SlopeBottom) ? MinHeight : MaxHeight;
-
+		
 		UnfilteredPath.Add(Midpoint);
 	}
 	
-	if (PathWithEdgeTypes.Num() < 2) {
+	if (PathNodes.Num() < 2) {
 		return UnfilteredPath;
 	}
 	
-	const auto [FinalPoint, ___] = PathWithEdgeTypes.Last();
+	const auto FinalPoint = PathNodes.Last();
 	UnfilteredPath.Add(FinalPoint);
 
 	// filter path, removing unnecessary collinear points
@@ -273,6 +238,7 @@ TArray<FVector> FNavGridAdjacencyList::FindPath(const FIntVector3& From, const F
 	
 	return Path;
 }
+#pragma optimize("", on)
 
 NavGrid::FNode::ID FNavGridAdjacencyList::GetNodeId(const int64 X, const int64 Y, const int64 Z)
 {
@@ -286,13 +252,4 @@ NavGrid::FNode::ID FNavGridAdjacencyList::GetNodeId(const int64 X, const int64 Y
 NavGrid::FNode::ID FNavGridAdjacencyList::GetNodeId(const NavGrid::FNode& Node)
 {
 	return GetNodeId(Node.X, Node.Y, Node.Z);
-}
-
-std::optional<std::reference_wrapper<const NavGrid::FNode>> FNavGridAdjacencyList::GetNode(const int64 X, const int64 Y, const int64 Z)
-{
-	const NavGrid::FNode::ID Id = GetNodeId(X, Y, Z);
-	if (!Nodes.Contains(Id)) {
-		return std::nullopt;
-	}
-	return Nodes[Id];
 }

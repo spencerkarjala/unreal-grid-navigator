@@ -8,11 +8,18 @@ class FNavGridAdjacencyList
 public:
 	TMap<NavGrid::FNode::ID, NavGrid::FNode> Nodes;
 
+	std::optional<std::reference_wrapper<const NavGrid::FNode>> GetNode(const int64 X, const int64 Y, const int64 Z) const;
 	bool HasNode(const int QueryX, const int QueryY, const int QueryZ) const;
 	void AddNode(int X, int Y, int Z, float Height);
+
+	TArray<FVector> GetReachableNeighbors(const int64 X, const int64 Y, const int64 Z) const;
+	
 	TArray<NavGrid::FNode> GetNodeList();
 	TArray<NavGrid::FEdge> GetEdgeList();
+	
 	void CreateEdge(int FromX, int FromY, int FromZ, float FromHeight, int ToX, int ToY, int ToZ, float ToHeight, NavGrid::EMapEdgeType EdgeType);
+	bool IsEdgeTraversable(const NavGrid::FEdge& Edge) const;
+	
 	void Clear();
 	FString Stringify();
 	void DrawDebug(const UWorld& World);
@@ -21,9 +28,8 @@ public:
 private:
 	static NavGrid::FNode::ID GetNodeId(const int64 X, const int64 Y, const int64 Z);
 	static NavGrid::FNode::ID GetNodeId(const NavGrid::FNode& Node);
-	std::optional<std::reference_wrapper<const NavGrid::FNode>> GetNode(const int64 X, const int64 Y, const int64 Z);
-
+	
 	// TODO: upgrade to parameters
-	static constexpr int AssumedMaxLayers = 64;
-	static constexpr int AssumedMaxRows = 64;
+	static constexpr int AssumedMaxLayers = 1024;
+	static constexpr int AssumedMaxRows = 1024;
 };
