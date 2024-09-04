@@ -175,8 +175,10 @@ TArray<FVector> FNavGridAdjacencyList::FindPath(const FIntVector3& From, const F
 		return PathNodes;
 	}
 
-	// adds halfway-between grid points to account for the cases where map
-	// incline changes; ie. tops and bottoms of sloped floors
+	// since A* navigation only knows grid indices, it has no idea about map geometry; therefore, we still
+	// need to add points for where map geometry heights change between nodes on the grid
+	// TODO: should use some sort of binary search/evenly-spaced path traces instead of just checking
+	//       edge types so this solution is more flexible
 	TArray<FVector> UnfilteredPath;
 	for (int i = 1; i < PathNodes.Num(); ++i) {
 		const auto PointA = PathNodes[i-1];
