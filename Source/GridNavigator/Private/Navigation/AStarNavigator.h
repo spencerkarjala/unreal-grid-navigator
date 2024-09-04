@@ -1,10 +1,9 @@
 #pragma once
 
-#include "NavGridAdjacencyListTypes.h"
-
 #include <functional>
-
 #include "PriorityQueue.h"
+
+DECLARE_LOG_CATEGORY_CLASS(LogAStarNavigator, Log, All)
 
 template <typename MapT, typename LocationT>
 concept can_query_nodes = requires(MapT Map, int64 X, int64 Y, int64 Z) {
@@ -12,8 +11,13 @@ concept can_query_nodes = requires(MapT Map, int64 X, int64 Y, int64 Z) {
 	{ Map.GetReachableNeighbors(X, Y, Z) } -> std::convertible_to<TArray<LocationT>>;
 };
 
+template <typename LocationT>
+concept has_distance_metric = requires(const LocationT& Lhs, const LocationT& Rhs) {
+	{ LocationT::Distance(Lhs, Rhs) } -> std::floating_point;
+};
+
 template <typename MapT, typename LocationT>
-requires can_query_nodes<MapT, LocationT>
+requires can_query_nodes<MapT, LocationT> && has_distance_metric<LocationT>
 class TAStarNavigator
 {
 	struct FAStarNode
@@ -22,7 +26,7 @@ class TAStarNavigator
 		FVector Location;
 		double GCost;
 	};
-	
+
 public:
 	std::function<double(const LocationT& Lhs, const LocationT& Rhs)> Heuristic;
 
@@ -74,7 +78,7 @@ public:
 			const auto& Neighbors = Map.GetReachableNeighbors(CurrLocation.X, CurrLocation.Y, CurrLocation.Z);
 
 			for (const auto& NeighborLocation : Neighbors) {
-				const double NeighborCost = CurrCost + Heuristic(CurrLocation, NeighborLocation);
+				const double NeighborCost = CurrCost + LocationT::Distance(CurrLocation, NeighborLocation);
 
 				if (!CostSoFar.Contains(NeighborLocation) || NeighborCost < CostSoFar[NeighborLocation]) {
 					FAStarNode* NeighborAStarNode = new FAStarNode({ CurrNodePtr, NeighborLocation, NeighborCost });
@@ -82,7 +86,7 @@ public:
 
 					CostSoFar.Add(NeighborLocation, NeighborCost);
 					const double Priority    = NeighborCost + Heuristic(NeighborLocation, FinalLocation);
-					NeighborAStarNode->GCost = Priority;
+					NeighborAStarNode->GCost = NeighborCost;
 					OpenSet.Push(NeighborAStarNode, Priority);
 				}
 			}
