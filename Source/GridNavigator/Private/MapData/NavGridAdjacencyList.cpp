@@ -16,10 +16,25 @@ std::optional<std::reference_wrapper<const NavGrid::FNode>> FNavGridAdjacencyLis
 	return Nodes[Id];
 }
 
-bool FNavGridAdjacencyList::HasNode(const int QueryX, const int QueryY, const int QueryZ) const
+std::optional<std::reference_wrapper<const NavGrid::FNode>> FNavGridAdjacencyList::GetNode(const FInt64Vector3& Index) const
 {
-	const NavGrid::FNode::ID id = this->GetNodeId(QueryX, QueryY, QueryZ);
-	return Nodes.Contains(id);
+	const NavGrid::FNode::ID ID = GetNodeId(Index.X, Index.Y, Index.Z);
+	if (!Nodes.Contains(ID)) {
+		return std::nullopt;
+	}
+	return Nodes[ID];
+}
+
+bool FNavGridAdjacencyList::HasNode(const int X, const int Y, const int Z) const
+{
+	const NavGrid::FNode::ID ID = this->GetNodeId(X, Y, Z);
+	return Nodes.Contains(ID);
+}
+
+bool FNavGridAdjacencyList::HasNode(const FInt64Vector3& Index) const
+{
+	const NavGrid::FNode::ID ID = this->GetNodeId(Index.X, Index.Y, Index.Z);
+	return Nodes.Contains(ID);
 }
 
 void FNavGridAdjacencyList::AddNode(int X, int Y, int Z, float Height)
@@ -240,7 +255,6 @@ TArray<FVector> FNavGridAdjacencyList::FindPath(const FIntVector3& From, const F
 	
 	return Path;
 }
-#pragma optimize("", on)
 
 NavGrid::FNode::ID FNavGridAdjacencyList::GetNodeId(const int64 X, const int64 Y, const int64 Z)
 {

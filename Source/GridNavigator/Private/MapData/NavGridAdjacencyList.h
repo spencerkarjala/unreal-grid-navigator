@@ -9,7 +9,9 @@ public:
 	TMap<NavGrid::FNode::ID, NavGrid::FNode> Nodes;
 
 	std::optional<std::reference_wrapper<const NavGrid::FNode>> GetNode(const int64 X, const int64 Y, const int64 Z) const;
-	bool HasNode(const int QueryX, const int QueryY, const int QueryZ) const;
+	std::optional<std::reference_wrapper<const NavGrid::FNode>> GetNode(const FInt64Vector3& Index) const;
+	bool HasNode(const int X, const int Y, const int Z) const;
+	bool HasNode(const FInt64Vector3& Index) const;
 	void AddNode(int X, int Y, int Z, float Height);
 
 	TArray<FVector> GetReachableNeighbors(const int64 X, const int64 Y, const int64 Z) const;
