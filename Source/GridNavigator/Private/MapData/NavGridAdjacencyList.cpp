@@ -3,6 +3,7 @@
 #include <functional>
 #include <optional>
 
+#include "GridNavigatorConfig.h"
 #include "Navigation/AStarNavigator.h"
 
 DECLARE_LOG_CATEGORY_CLASS(LogNavGridAdjacencyList, Log, All)
@@ -42,15 +43,15 @@ void FNavGridAdjacencyList::AddNode(int X, int Y, int Z, float Height)
 	this->Nodes.Emplace(GetNodeId(X, Y, Z), NavGrid::FNode(X, Y, Z, Height));
 }
 
-TArray<FVector> FNavGridAdjacencyList::GetReachableNeighbors(const int64 X, const int64 Y, const int64 Z) const
+TArray<FInt64Vector3> FNavGridAdjacencyList::GetReachableNeighbors(const FInt64Vector3& Index) const
 {
-	const auto NodeResult = GetNode(X, Y, Z);
+	const auto NodeResult = GetNode(Index);
 	if (!NodeResult.has_value()) {
 		return {};
 	}
 	const auto Node = NodeResult->get();
 
-	TArray<FVector> Result;
+	TArray<FInt64Vector3> Result;
 	for (const auto& Edge : Node.OutEdges) {
 		if (Edge.Type != NavGrid::Direct && Edge.Type != NavGrid::Slope && Edge.Type != NavGrid::SlopeBottom && Edge.Type != NavGrid::SlopeTop) {
 			continue;
@@ -156,104 +157,6 @@ void FNavGridAdjacencyList::DrawDebug(const UWorld& World)
 			);
 		}
 	}
-}
-
-TArray<FVector> FNavGridAdjacencyList::FindPath(const FIntVector3& From, const FIntVector3& To) {
-	const std::function Heuristic = [this](const FVector& Lhs, const FVector& Rhs) -> double
-	{
-		// ignore height since we only care about grid coordinates
-		return FMath::Sqrt((Rhs.Y-Lhs.Y)*(Rhs.Y-Lhs.Y) + (Rhs.X-Lhs.X)*(Rhs.X-Lhs.X));
-	};
-
-	if (!this->HasNode(From.X, From.Y, From.Z) || !this->HasNode(To.X, To.Y, To.Z)) {
-		return TArray<FVector>();
-	}
-
-	const auto StartNodeResult = GetNode(From.X, From.Y, From.Z);
-	const auto FinalNodeResult = GetNode(To.X,   To.Y,   To.Z);
-
-	if (!StartNodeResult.has_value() || !FinalNodeResult.has_value()) {
-		return TArray<FVector>();
-	}
-
-	const auto StartNode = StartNodeResult->get();
-	const auto FinalNode = FinalNodeResult->get();
-
-	const FVector StartNodePos(StartNode.X, StartNode.Y, StartNode.Z);
-	const FVector FinalNodePos(FinalNode.X, FinalNode.Y, FinalNode.Z);
-
-	// perform actual pathfinding
-	TAStarNavigator<FNavGridAdjacencyList, FVector> Navigator;
-	Navigator.Heuristic = Heuristic;
-	TArray<FVector> PathNodes = Navigator.Navigate(*this, StartNodePos, FinalNodePos);
-	if (PathNodes.Num() == 0) {
-		return PathNodes;
-	}
-
-	// since A* navigation only knows grid indices, it has no idea about map geometry; therefore, we still
-	// need to add points for where map geometry heights change between nodes on the grid
-	// TODO: should use some sort of binary search/evenly-spaced path traces instead of just checking
-	//       edge types so this solution is more flexible
-	TArray<FVector> UnfilteredPath;
-	for (int i = 1; i < PathNodes.Num(); ++i) {
-		const auto PointA = PathNodes[i-1];
-		const auto PointB = PathNodes[i];
-
-		UnfilteredPath.Add(PointA);
-
-		const auto PointANodeResult = GetNode(PointA.X, PointA.Y, PointA.Z);
-		check(PointANodeResult.has_value());
-		const auto PointANode = PointANodeResult->get();
-
-		const auto PointBID = GetNodeId(PointB.X, PointB.Y, PointB.Z);
-		NavGrid::EMapEdgeType EdgeTypeAB = NavGrid::None;
-		for (const auto& OutEdge : PointANode.OutEdges) {
-			if (OutEdge.OutID == PointBID) {
-				EdgeTypeAB = OutEdge.Type;
-				break;
-			}
-		}
-
-		if (EdgeTypeAB != NavGrid::EMapEdgeType::SlopeBottom && EdgeTypeAB != NavGrid::EMapEdgeType::SlopeTop) {
-			continue;
-		}
-		
-		FVector Midpoint = (PointA + PointB) / 2.0;
-		const float MinHeight = FMath::Min(PointA.Z, PointB.Z);
-		const float MaxHeight = FMath::Max(PointA.Z, PointB.Z);
-		
-		Midpoint.Z = (EdgeTypeAB == NavGrid::EMapEdgeType::SlopeBottom) ? MinHeight : MaxHeight;
-		
-		UnfilteredPath.Add(Midpoint);
-	}
-	
-	if (PathNodes.Num() < 2) {
-		return UnfilteredPath;
-	}
-	
-	const auto FinalPoint = PathNodes.Last();
-	UnfilteredPath.Add(FinalPoint);
-
-	// filter path, removing unnecessary collinear points
-	TArray<FVector> Path;
-	FVector LineStart = UnfilteredPath[0];
-	FVector LineEnd, TestPoint;
-	
-	Path.Add(UnfilteredPath[0]);
-	for (int i = 2; i < UnfilteredPath.Num(); ++i) {
-		LineEnd = UnfilteredPath[i];
-		TestPoint = UnfilteredPath[i-1];
-		
-		UE::Geometry::FLine3d StartEndLine = UE::Geometry::FLine3d::FromPoints(LineStart, LineEnd);
-		float DistanceToLine = StartEndLine.DistanceSquared(TestPoint);
-		if (DistanceToLine >= UE_KINDA_SMALL_NUMBER) {
-			Path.Add(TestPoint);
-			LineStart = TestPoint;
-		}
-	}
-	Path.Add(UnfilteredPath.Last());
-	
-	return Path;
 }
 
 NavGrid::FNode::ID FNavGridAdjacencyList::GetNodeId(const int64 X, const int64 Y, const int64 Z)

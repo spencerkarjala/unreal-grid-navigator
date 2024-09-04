@@ -103,15 +103,6 @@ struct FNavGridLevel
 	 */
 	FBox GetBounds() const;
 
-	/**
-	 * @brief Performs pathfinding on saved map grid data between two points.
-	 * 
-	 * @param From World coordinate to pathfind from
-	 * @param To World coordinate to pathfind to
-	 * @return An array of world coordinates that comprise a path between From and To
-	 */
-	TArray<FVector> FindPath(const FVector& From, const FVector& To);
-
 	TMap<uint32, FNavGridBlock> Blocks;
 	FNavGridAdjacencyList Map;
 };

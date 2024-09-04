@@ -11,6 +11,7 @@
 #include "NavigationGridDataGenerator.h"
 #include "MapData/NavGridDataSerializer.h"
 #include "MapData/NavGridLevel.h"
+#include "Navigation/NavGridPathfinder.h"
 
 DECLARE_LOG_CATEGORY_CLASS(LogNavigationGridData, Log, All);
 
@@ -123,6 +124,7 @@ FPathFindingResult ANavigationGridData::FindPath(const FNavAgentProperties& Agen
 
 	const auto* Self = Cast<const ANavigationGridData>(Query.NavData.Get());
 	const auto* NavFilter = Query.QueryFilter.Get();
+	const auto* World = Self->GetWorld();
 
 	if (!Self) {
 		UE_LOG(LogNavigationGridData, Error, TEXT("Failed to retrieve reference to RecastNavMesh in FindPath"));
@@ -130,6 +132,10 @@ FPathFindingResult ANavigationGridData::FindPath(const FNavAgentProperties& Agen
 	}
 	if (!NavFilter) {
 		UE_LOG(LogNavigationGridData, Error, TEXT("Failed to retrieve reference to query filter in FindPath"));
+		return Result;
+	}
+	if (World == nullptr) {
+		UE_LOG(LogNavigationGridData, Error, TEXT("Failed to retrieve world reference in FindPath"));
 		return Result;
 	}
 	
@@ -169,15 +175,15 @@ FPathFindingResult ANavigationGridData::FindPath(const FNavAgentProperties& Agen
 
 	UE_LOG(LogNavigationGridData, Log, TEXT("FindPath with nav data: %s"), *Self->GetPathName());
 
-	const auto Points = Self->LevelData->FindPath(Query.StartLocation, Query.EndLocation);
+	const auto Points = FNavGridPathfinder::FindPath(*World, Self->LevelData->Map, Query.StartLocation, Query.EndLocation);
 
 	if (Points.IsEmpty()) {
 		Result = ENavigationQueryResult::Fail;
 		return Result;
 	}
 	
-	for (const FVector& Point : Points) {
-		Result.Path->GetPathPoints().Add(FNavPathPoint(Point));
+	for (const auto& Point : Points) {
+		Result.Path->GetPathPoints().Add(Point);
 	}
 
 	if (FVector::Distance(Points.Last(), EndLocation) > 0.1 && !Query.bAllowPartialPaths) {

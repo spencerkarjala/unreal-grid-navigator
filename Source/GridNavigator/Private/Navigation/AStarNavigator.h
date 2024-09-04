@@ -6,24 +6,24 @@
 DECLARE_LOG_CATEGORY_CLASS(LogAStarNavigator, Log, All)
 
 template <typename MapT, typename LocationT>
-concept can_query_nodes = requires(MapT Map, int64 X, int64 Y, int64 Z) {
-	{ Map.HasNode(X, Y, Z) } -> std::convertible_to<bool>;
-	{ Map.GetReachableNeighbors(X, Y, Z) } -> std::convertible_to<TArray<LocationT>>;
+concept can_query_nodes = requires(MapT Map, LocationT Index) {
+	{ Map.HasNode(Index) } -> std::convertible_to<bool>;
+	{ Map.GetReachableNeighbors(Index) } -> std::convertible_to<TArray<LocationT>>;
 };
 
 template <typename LocationT>
 concept has_distance_metric = requires(const LocationT& Lhs, const LocationT& Rhs) {
-	{ LocationT::Distance(Lhs, Rhs) } -> std::floating_point;
+	{ Distance(Lhs, Rhs) } -> std::floating_point;
 };
 
 template <typename MapT, typename LocationT>
-requires can_query_nodes<MapT, LocationT> && has_distance_metric<LocationT>
+requires can_query_nodes<MapT, LocationT>
 class TAStarNavigator
 {
 	struct FAStarNode
 	{
 		FAStarNode* PrevNode;
-		FVector Location;
+		LocationT Location;
 		double GCost;
 	};
 
@@ -75,10 +75,10 @@ public:
 				continue;
 			}
 			
-			const auto& Neighbors = Map.GetReachableNeighbors(CurrLocation.X, CurrLocation.Y, CurrLocation.Z);
+			const auto& Neighbors = Map.GetReachableNeighbors(CurrLocation);
 
 			for (const auto& NeighborLocation : Neighbors) {
-				const double NeighborCost = CurrCost + LocationT::Distance(CurrLocation, NeighborLocation);
+				const double NeighborCost = CurrCost + Distance(CurrLocation, NeighborLocation);
 
 				if (!CostSoFar.Contains(NeighborLocation) || NeighborCost < CostSoFar[NeighborLocation]) {
 					FAStarNode* NeighborAStarNode = new FAStarNode({ CurrNodePtr, NeighborLocation, NeighborCost });
@@ -96,7 +96,7 @@ public:
 		if (IsNavigationSuccessful) {
 			while (CurrNodePtr != nullptr) {
 				const auto [PrevNodePtr, CurrLocation, CurrCost] = *CurrNodePtr;
-				const FVector NewPathNode(CurrLocation.X, CurrLocation.Y, CurrLocation.Z);
+				const LocationT NewPathNode(CurrLocation.X, CurrLocation.Y, CurrLocation.Z);
 				Result.Push(NewPathNode);
 				CurrNodePtr = CurrNodePtr->PrevNode;
 			}

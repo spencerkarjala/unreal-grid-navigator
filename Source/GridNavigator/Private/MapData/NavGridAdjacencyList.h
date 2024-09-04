@@ -14,7 +14,7 @@ public:
 	bool HasNode(const FInt64Vector3& Index) const;
 	void AddNode(int X, int Y, int Z, float Height);
 
-	TArray<FVector> GetReachableNeighbors(const int64 X, const int64 Y, const int64 Z) const;
+	TArray<FInt64Vector3> GetReachableNeighbors(const FInt64Vector3& Index) const;
 	
 	TArray<NavGrid::FNode> GetNodeList();
 	TArray<NavGrid::FEdge> GetEdgeList();
@@ -25,7 +25,6 @@ public:
 	void Clear();
 	FString Stringify();
 	void DrawDebug(const UWorld& World);
-	TArray<FVector> FindPath(const FIntVector3& From, const FIntVector3& To);
 
 private:
 	static NavGrid::FNode::ID GetNodeId(const int64 X, const int64 Y, const int64 Z);

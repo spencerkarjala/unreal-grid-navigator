@@ -20,12 +20,12 @@ public:
 		);
 	}
 
-	static FIntVector3 WorldToGridIndex(const FVector& WorldCoord)
+	static FInt64Vector3 WorldToGridIndex(const FVector& WorldCoord)
 	{
-		return FIntVector3(
-			FMath::RoundToInt(WorldCoord.X / static_cast<float>(GridNavigatorConfig::GridSizeX)),
-			FMath::RoundToInt(WorldCoord.Y / static_cast<float>(GridNavigatorConfig::GridSizeY)),
-			FMath::RoundToInt(WorldCoord.Z / static_cast<float>(GridNavigatorConfig::GridSizeZ))
+		return FInt64Vector3(
+			FMath::RoundToInt64(WorldCoord.X / static_cast<double>(GridNavigatorConfig::GridSizeX)),
+			FMath::RoundToInt64(WorldCoord.Y / static_cast<double>(GridNavigatorConfig::GridSizeY)),
+			FMath::RoundToInt64(WorldCoord.Z / static_cast<double>(GridNavigatorConfig::GridSizeZ))
 		);
 	}
 
@@ -51,6 +51,15 @@ public:
 			static_cast<float>(IndexCoord.X) * static_cast<float>(GridNavigatorConfig::GridSizeX),
 			static_cast<float>(IndexCoord.Y) * static_cast<float>(GridNavigatorConfig::GridSizeY),
 			static_cast<float>(IndexCoord.Z) * static_cast<float>(GridNavigatorConfig::GridSizeZ)
+		);
+	}
+
+	static FVector GridIndexToWorld(const FInt64Vector3& IndexCoord)
+	{
+		return FVector(
+			static_cast<double>(IndexCoord.X) * static_cast<double>(GridNavigatorConfig::GridSizeX),
+			static_cast<double>(IndexCoord.Y) * static_cast<double>(GridNavigatorConfig::GridSizeY),
+			static_cast<double>(IndexCoord.Z) * static_cast<double>(GridNavigatorConfig::GridSizeZ)
 		);
 	}
 
