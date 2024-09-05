@@ -2,6 +2,7 @@
 #include "NavGridBlock.h"
 
 #include "CoreMinimal.h"
+#include "MapData/NavGridAdjacencyList.h"
 #include "NavGridLevel.generated.h"
 
 USTRUCT(Blueprintable, BlueprintType)

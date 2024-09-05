@@ -2,8 +2,6 @@
 
 #include <sstream>
 
-#include "GridNavigatorConfig.h"
-
 DECLARE_LOG_CATEGORY_CLASS(LogNavGridLevel, Log, All);
 
 FString FNavGridLevel::ToString() const
