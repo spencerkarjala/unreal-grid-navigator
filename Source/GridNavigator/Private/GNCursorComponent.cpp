@@ -117,6 +117,9 @@ bool UGNCursorComponent::UpdatePosition(const FVector& WorldDestination, const F
 	}
 	
 	UNavigationPath* FoundPath = NavSys->FindPathToLocationSynchronously(OwnerActor, FloorTraceResult.Location, DestinationRounded);
+	if (FoundPath == nullptr || !FoundPath->IsValid()) {
+		return false;
+	}
 	const auto& PathPoints = FoundPath->PathPoints;
 
 	// hide cursor if destination is not reachable
