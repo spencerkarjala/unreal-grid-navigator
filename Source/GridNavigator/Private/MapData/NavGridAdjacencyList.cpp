@@ -159,6 +159,11 @@ void FNavGridAdjacencyList::DrawDebug(const UWorld& World)
 	}
 }
 
+void FNavGridAdjacencyList::Serialize(FArchive& Archive)
+{
+	Archive << Nodes;
+}
+
 NavGrid::FNode::ID FNavGridAdjacencyList::GetNodeId(const int64 X, const int64 Y, const int64 Z)
 {
 	return (

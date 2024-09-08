@@ -3,7 +3,6 @@
 #include "CoreMinimal.h"
 #include "NavMesh/RecastNavMesh.h"
 #include "MapData/NavGridLevel.h"
-#include "Display/NavGridRenderingComponent.h"
 #include "NavigationGridData.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FNavigationDataBlockUpdatedDelegate, uint32, ID, const FBox&, Bounds);

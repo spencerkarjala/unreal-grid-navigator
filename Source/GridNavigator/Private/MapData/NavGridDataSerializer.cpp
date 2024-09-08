@@ -4,7 +4,7 @@ DECLARE_LOG_CATEGORY_CLASS(LogNavGridDataSerializer, Log, All)
 
 void operator<<(FArchive& Archive, FNavGridAdjacencyList& Data)
 {
-	Archive << Data.Nodes;
+	Data.Serialize(Archive);
 }
 
 void operator<<(FArchive& Archive, FNavGridBlock& Data)

@@ -6,8 +6,6 @@
 class FNavGridAdjacencyList
 {
 public:
-	TMap<NavGrid::FNode::ID, NavGrid::FNode> Nodes;
-
 	std::optional<std::reference_wrapper<const NavGrid::FNode>> GetNode(const int64 X, const int64 Y, const int64 Z) const;
 	std::optional<std::reference_wrapper<const NavGrid::FNode>> GetNode(const FInt64Vector3& Index) const;
 	bool HasNode(const int X, const int Y, const int Z) const;
@@ -26,9 +24,13 @@ public:
 	FString Stringify();
 	void DrawDebug(const UWorld& World);
 
+	void Serialize(FArchive& Archive);
+
 private:
 	static NavGrid::FNode::ID GetNodeId(const int64 X, const int64 Y, const int64 Z);
 	static NavGrid::FNode::ID GetNodeId(const NavGrid::FNode& Node);
+	
+	TMap<NavGrid::FNode::ID, NavGrid::FNode> Nodes;
 	
 	// TODO: upgrade to parameters
 	static constexpr int AssumedMaxLayers = 1024;
