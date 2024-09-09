@@ -13,22 +13,22 @@ namespace NavGrid
 	};
 
 	struct FEdge;
+
+	typedef FInt64Vector3 FAdjacencyListIndex;
 		
 	struct FNode
 	{
-		typedef int64 ID;
-
 		FNode();
-		FNode(const int32 NewX, const int32 NewY, const int32 NewZ, const float NewHeight);
+		FNode(const FAdjacencyListIndex& NewIndex, const float NewHeight);
 			
-		int32 X, Y, Z;
+		FAdjacencyListIndex Index;
 		float Height;
 		TArray<FEdge> OutEdges;
 
 		// serialization/deserialization
 		friend FArchive& operator<<(FArchive& Ar, FNode& Rhs)
 		{
-			Ar << Rhs.X << Rhs.Y << Rhs.Z << Rhs.Height << Rhs.OutEdges;
+			Ar << Rhs.Index.X << Rhs.Index.Y << Rhs.Index.Z << Rhs.Height << Rhs.OutEdges;
 			return Ar;
 		}
 		
@@ -38,10 +38,10 @@ namespace NavGrid
 	struct FEdge
 	{
 		FEdge();
-		FEdge(const FNode::ID NewInID, const FNode::ID NewOutID, const EMapEdgeType NewType, const FVector& NewDirection);
+		FEdge(const FAdjacencyListIndex& NewInID, const FAdjacencyListIndex& NewOutID, const EMapEdgeType NewType, const FVector& NewDirection);
 			
-		FNode::ID InID;
-		FNode::ID OutID;
+		FAdjacencyListIndex InIndex;
+		FAdjacencyListIndex OutIndex;
 		EMapEdgeType Type;
 		FVector Direction;
 
@@ -50,7 +50,7 @@ namespace NavGrid
 		// serialization/deserialization
 		friend FArchive& operator<<(FArchive& Ar, FEdge& Rhs)
 		{
-			Ar << Rhs.InID << Rhs.OutID;
+			Ar << Rhs.InIndex << Rhs.OutIndex;
 				
 			if (Ar.IsLoading()) {
 				uint8 TypeAsInt;

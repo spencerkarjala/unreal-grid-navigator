@@ -7,32 +7,25 @@ class FNavGridAdjacencyList
 {
 public:
 	std::optional<std::reference_wrapper<const NavGrid::FNode>> GetNode(const int64 X, const int64 Y, const int64 Z) const;
-	std::optional<std::reference_wrapper<const NavGrid::FNode>> GetNode(const FInt64Vector3& Index) const;
-	bool HasNode(const int X, const int Y, const int Z) const;
-	bool HasNode(const FInt64Vector3& Index) const;
-	void AddNode(int X, int Y, int Z, float Height);
+	std::optional<std::reference_wrapper<const NavGrid::FNode>> GetNode(const NavGrid::FAdjacencyListIndex& Index) const;
+	FORCEINLINE bool HasNode(const int X, const int Y, const int Z) const;
+	FORCEINLINE bool HasNode(const NavGrid::FAdjacencyListIndex& Index) const;
+	FORCEINLINE void AddNode(const int64 X, const int64 Y, const int64 Z, float Height);
+	FORCEINLINE void AddNode(const NavGrid::FAdjacencyListIndex& Index, float Height);
 
-	TArray<FInt64Vector3> GetReachableNeighbors(const FInt64Vector3& Index) const;
+	TArray<NavGrid::FAdjacencyListIndex> GetReachableNeighbors(const NavGrid::FAdjacencyListIndex& Index) const;
 	
 	TArray<NavGrid::FNode> GetNodeList();
 	TArray<NavGrid::FEdge> GetEdgeList();
 	
-	void CreateEdge(int FromX, int FromY, int FromZ, float FromHeight, int ToX, int ToY, int ToZ, float ToHeight, NavGrid::EMapEdgeType EdgeType);
+	void CreateEdge(const NavGrid::FAdjacencyListIndex& FromIndex, const float FromHeight, const NavGrid::FAdjacencyListIndex& ToIndex, const float ToHeight, const NavGrid::EMapEdgeType EdgeType);
 	bool IsEdgeTraversable(const NavGrid::FEdge& Edge) const;
 	
 	void Clear();
 	FString Stringify();
-	void DrawDebug(const UWorld& World);
 
 	void Serialize(FArchive& Archive);
 
 private:
-	static NavGrid::FNode::ID GetNodeId(const int64 X, const int64 Y, const int64 Z);
-	static NavGrid::FNode::ID GetNodeId(const NavGrid::FNode& Node);
-	
-	TMap<NavGrid::FNode::ID, NavGrid::FNode> Nodes;
-	
-	// TODO: upgrade to parameters
-	static constexpr int AssumedMaxLayers = 1024;
-	static constexpr int AssumedMaxRows = 1024;
+	TMap<NavGrid::FAdjacencyListIndex, NavGrid::FNode> Nodes;
 };

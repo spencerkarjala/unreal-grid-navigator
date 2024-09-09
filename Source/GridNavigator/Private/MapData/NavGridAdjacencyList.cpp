@@ -8,42 +8,48 @@
 
 DECLARE_LOG_CATEGORY_CLASS(LogNavGridAdjacencyList, Log, All)
 
+using NavGrid::FAdjacencyListIndex;
+
 std::optional<std::reference_wrapper<const NavGrid::FNode>> FNavGridAdjacencyList::GetNode(const int64 X, const int64 Y, const int64 Z) const
 {
-	const NavGrid::FNode::ID Id = GetNodeId(X, Y, Z);
-	if (!Nodes.Contains(Id)) {
+	const FAdjacencyListIndex Index(X, Y, Z);
+	if (!Nodes.Contains(Index)) {
 		return std::nullopt;
 	}
-	return Nodes[Id];
+	return Nodes[Index];
 }
 
-std::optional<std::reference_wrapper<const NavGrid::FNode>> FNavGridAdjacencyList::GetNode(const FInt64Vector3& Index) const
+std::optional<std::reference_wrapper<const NavGrid::FNode>> FNavGridAdjacencyList::GetNode(const FAdjacencyListIndex& Index) const
 {
-	const NavGrid::FNode::ID ID = GetNodeId(Index.X, Index.Y, Index.Z);
-	if (!Nodes.Contains(ID)) {
+	if (!Nodes.Contains(Index)) {
 		return std::nullopt;
 	}
-	return Nodes[ID];
+	return Nodes[Index];
 }
 
 bool FNavGridAdjacencyList::HasNode(const int X, const int Y, const int Z) const
 {
-	const NavGrid::FNode::ID ID = this->GetNodeId(X, Y, Z);
-	return Nodes.Contains(ID);
+	const FAdjacencyListIndex Index(X, Y, Z);
+	return Nodes.Contains(Index);
 }
 
-bool FNavGridAdjacencyList::HasNode(const FInt64Vector3& Index) const
+bool FNavGridAdjacencyList::HasNode(const FAdjacencyListIndex& Index) const
 {
-	const NavGrid::FNode::ID ID = this->GetNodeId(Index.X, Index.Y, Index.Z);
-	return Nodes.Contains(ID);
+	return Nodes.Contains(Index);
 }
 
-void FNavGridAdjacencyList::AddNode(int X, int Y, int Z, float Height)
+void FNavGridAdjacencyList::AddNode(const int64 X, const int64 Y, const int64 Z, const float Height)
 {
-	this->Nodes.Emplace(GetNodeId(X, Y, Z), NavGrid::FNode(X, Y, Z, Height));
+	const FAdjacencyListIndex Index(X, Y, Z);
+	Nodes.Emplace(Index, NavGrid::FNode(Index, Height));
 }
 
-TArray<FInt64Vector3> FNavGridAdjacencyList::GetReachableNeighbors(const FInt64Vector3& Index) const
+void FNavGridAdjacencyList::AddNode(const FAdjacencyListIndex& Index, const float Height)
+{
+	Nodes.Emplace(Index, NavGrid::FNode(Index, Height));
+}
+
+TArray<FAdjacencyListIndex> FNavGridAdjacencyList::GetReachableNeighbors(const FAdjacencyListIndex& Index) const
 {
 	const auto NodeResult = GetNode(Index);
 	if (!NodeResult.has_value()) {
@@ -51,13 +57,13 @@ TArray<FInt64Vector3> FNavGridAdjacencyList::GetReachableNeighbors(const FInt64V
 	}
 	const auto Node = NodeResult->get();
 
-	TArray<FInt64Vector3> Result;
+	TArray<FAdjacencyListIndex> Result;
 	for (const auto& Edge : Node.OutEdges) {
 		if (Edge.Type != NavGrid::Direct && Edge.Type != NavGrid::Slope && Edge.Type != NavGrid::SlopeBottom && Edge.Type != NavGrid::SlopeTop) {
 			continue;
 		}
-		const auto& Neighbor = Nodes[Edge.OutID];
-		Result.Emplace(Neighbor.X, Neighbor.Y, Neighbor.Z);
+		const auto& Neighbor = Nodes[Edge.InIndex];
+		Result.Emplace(Neighbor.Index);
 	}
 	return Result;
 }
@@ -80,25 +86,25 @@ TArray<NavGrid::FEdge> FNavGridAdjacencyList::GetEdgeList()
 	return Output;
 }
 
-void FNavGridAdjacencyList::CreateEdge(int FromX, int FromY, int FromZ, float FromHeight, int ToX, int ToY, int ToZ, float ToHeight, NavGrid::EMapEdgeType EdgeType)
+void FNavGridAdjacencyList::CreateEdge(const FAdjacencyListIndex& FromIndex, const float FromHeight, const FAdjacencyListIndex& ToIndex, const float ToHeight, const NavGrid::EMapEdgeType EdgeType)
 {
-	if (!this->HasNode(FromX, FromY, FromZ)) {
-		this->AddNode(FromX, FromY, FromZ, FromHeight);
+	if (!HasNode(FromIndex)) {
+		AddNode(FromIndex, FromHeight);
+	}
+	if (!HasNode(ToIndex)) {
+		AddNode(ToIndex, ToHeight);
 	}
 
-	NavGrid::FNode::ID FromId = GetNodeId(FromX, FromY, FromZ);
-	NavGrid::FNode::ID ToId   = GetNodeId(ToX, ToY, ToZ);
+	const FVector Direction(ToIndex.X - FromIndex.X, ToIndex.Y - FromIndex.Y, ToIndex.Z - FromIndex.Z);
 
-	const FVector Direction(ToX - FromX, ToY - FromY, ToZ - FromZ);
-
-	Nodes[FromId].OutEdges.Emplace(FromId, ToId, EdgeType, Direction);
+	Nodes[FromIndex].OutEdges.Emplace(FromIndex, ToIndex, EdgeType, Direction);
 }
 
 bool FNavGridAdjacencyList::IsEdgeTraversable(const NavGrid::FEdge& Edge) const
 {
 	const bool IsTraversableType = Edge.Type == NavGrid::Direct || Edge.Type == NavGrid::Slope || Edge.Type == NavGrid::SlopeBottom || Edge.Type == NavGrid::SlopeTop;
-	const bool IsSourceNodeValid = Nodes.Contains(Edge.InID);
-	const bool IsTargetNodeValid = Nodes.Contains(Edge.OutID);
+	const bool IsSourceNodeValid = Nodes.Contains(Edge.InIndex);
+	const bool IsTargetNodeValid = Nodes.Contains(Edge.OutIndex);
 
 	return IsTraversableType && IsSourceNodeValid && IsTargetNodeValid;
 }
@@ -114,15 +120,13 @@ FString FNavGridAdjacencyList::Stringify()
 
 	Output.Append(TEXT("Map has structure:\r\n"));
 
-	for (const auto& [Id, Node] : this->Nodes) {
-		Output.Appendf(TEXT("\tID %d = (%d, %d) on layer %d and with outward edges:\r\n"), Id, Node.X, Node.Y, Node.Z);
-		for (const auto& [InId, OutId, Type, Direction] : Node.OutEdges) {
-			const NavGrid::FNode& In = Nodes[InId];
-			const NavGrid::FNode& Out = Nodes[OutId];
+	for (const auto& [Index, Node] : Nodes) {
+		Output.Appendf(TEXT("\tNode (%lld, %lld, %lld) has outward edges:\r\n"), Node.Index.X, Node.Index.Y, Node.Index.Z);
+		for (const auto& [InIndex, OutIndex, Type, Direction] : Node.OutEdges) {
 			Output.Appendf(
-				TEXT("\t\tID %d: (%d, %d) L%d H%0.2f -> ID %d: (%d, %d)  L %d  H %0.2f | Dir: (%0.2f, %0.2f, %0.2f)\r\n"),
-				InId,  In.X,  In.Y,  In.Z,  In.Height,
-				OutId, Out.X, Out.Y, Out.Z, Out.Height,
+				TEXT("\t\tEdge from (%lld, %lld, %lld) to (%lld, %lld, %lld) | Dir: (%0.2f, %0.2f, %0.2f)\r\n"),
+				InIndex.X,  InIndex.Y,  InIndex.Z,
+				OutIndex.X, OutIndex.Y, OutIndex.Z,
 				Direction.X, Direction.Y, Direction.Z
 			);
 		}
@@ -131,49 +135,7 @@ FString FNavGridAdjacencyList::Stringify()
 	return Output;
 }
 
-void FNavGridAdjacencyList::DrawDebug(const UWorld& World)
-{
-	for (const auto& [Id, Node] : Nodes) {
-		for (const auto& [ToId, FromId, EdgeType, Direction] : Node.OutEdges) {
-			const auto& FromNode = Node;
-			const auto& ToNode = Nodes[FromId];
-
-			FColor DebugLineColor;
-			switch(EdgeType) {
-			case NavGrid::EMapEdgeType::Direct:      DebugLineColor = FColor(0,   255, 255); break;
-			case NavGrid::EMapEdgeType::Slope:       DebugLineColor = FColor(0,   255, 0);   break;
-			case NavGrid::EMapEdgeType::SlopeBottom: DebugLineColor = FColor(255, 200, 0);   break;
-			case NavGrid::EMapEdgeType::SlopeTop:    DebugLineColor = FColor(200, 255, 0);   break;
-			case NavGrid::EMapEdgeType::Cliff:       DebugLineColor = FColor(0,   0,   255); break;
-			default:          DebugLineColor = FColor(255, 0,   0);   break;
-			}
-
-			DrawDebugLine(
-				&World,
-				FVector(FromNode.X * 100.0, FromNode.Y * 100.0, FromNode.Height),
-				FVector(ToNode.X   * 100.0, ToNode.Y   * 100.0, ToNode.Height),
-				DebugLineColor,
-				true
-			);
-		}
-	}
-}
-
 void FNavGridAdjacencyList::Serialize(FArchive& Archive)
 {
 	Archive << Nodes;
-}
-
-NavGrid::FNode::ID FNavGridAdjacencyList::GetNodeId(const int64 X, const int64 Y, const int64 Z)
-{
-	return (
-		Z * AssumedMaxRows * AssumedMaxLayers
-		  + Y * AssumedMaxRows
-		  + X
-	);
-}
-
-NavGrid::FNode::ID FNavGridAdjacencyList::GetNodeId(const NavGrid::FNode& Node)
-{
-	return GetNodeId(Node.X, Node.Y, Node.Z);
 }

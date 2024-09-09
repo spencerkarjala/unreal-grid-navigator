@@ -238,12 +238,11 @@ void FNavGridBuildTask::PopulateBlock(const UWorld& World, FNavGridAdjacencyList
 
 				const int FromZ = FMath::RoundToInt(NodeHeight / 25.0);
 				const int ToZ   = FMath::RoundToInt(NeighborHeight /  25.0);
+
+				const NavGrid::FAdjacencyListIndex FromIndex(i, j, FromZ);
+				const NavGrid::FAdjacencyListIndex ToIndex(i + NeighborI, j + NeighborJ, ToZ);
 			
-				Map.CreateEdge(
-					i,             j,             FromZ, NodeHeight,
-					i + NeighborI, j + NeighborJ, ToZ,   NeighborHeight,
-					EdgeType
-				);
+				Map.CreateEdge(FromIndex, NodeHeight, ToIndex, NeighborHeight, EdgeType);
 			}
 		}
 	}
