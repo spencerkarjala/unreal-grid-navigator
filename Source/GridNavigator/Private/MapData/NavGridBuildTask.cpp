@@ -108,7 +108,7 @@ void FNavGridBuildTask::PopulateBlock(const UWorld& World, FNavGridAdjacencyList
 			}
 
 			if (!Map.HasNode(i, j, HitIndexZ)) {
-				Map.AddNode(i, j, HitIndexZ, HitResult.Location.Z);
+				Map.AddNode(i, j, HitIndexZ);
 				UE_LOG(LogNavGridBuildTask, Verbose, TEXT("Added new node to nav grid at indices (%d, %d, %d)"), i, j, HitIndexZ);
 			}
 
@@ -216,7 +216,7 @@ void FNavGridBuildTask::PopulateBlock(const UWorld& World, FNavGridAdjacencyList
 					check(DidMidpointTraceHit);
 
 					const float MidpointHeight = MidpointHitResult.Location.Z;
-					const float AverageHeight = (NodeHeight + NeighborHeight) / 2.f;
+					const float AverageHeight = (NodeHeight + NeighborHeight) / 2.f;   
 
 					const bool IsMiddleOfSlope = IsRoughlyEqual(MidpointHeight, AverageHeight, 1.0);
 
@@ -242,7 +242,7 @@ void FNavGridBuildTask::PopulateBlock(const UWorld& World, FNavGridAdjacencyList
 				const NavGrid::FAdjacencyListIndex FromIndex(i, j, FromZ);
 				const NavGrid::FAdjacencyListIndex ToIndex(i + NeighborI, j + NeighborJ, ToZ);
 			
-				Map.CreateEdge(FromIndex, NodeHeight, ToIndex, NeighborHeight, EdgeType);
+				Map.CreateEdge(FromIndex, ToIndex, EdgeType);
 			}
 		}
 	}

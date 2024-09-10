@@ -38,15 +38,15 @@ bool FNavGridAdjacencyList::HasNode(const FAdjacencyListIndex& Index) const
 	return Nodes.Contains(Index);
 }
 
-void FNavGridAdjacencyList::AddNode(const int64 X, const int64 Y, const int64 Z, const float Height)
+void FNavGridAdjacencyList::AddNode(const int64 X, const int64 Y, const int64 Z)
 {
 	const FAdjacencyListIndex Index(X, Y, Z);
-	Nodes.Emplace(Index, NavGrid::FNode(Index, Height));
+	Nodes.Emplace(Index, NavGrid::FNode(Index));
 }
 
-void FNavGridAdjacencyList::AddNode(const FAdjacencyListIndex& Index, const float Height)
+void FNavGridAdjacencyList::AddNode(const FAdjacencyListIndex& Index)
 {
-	Nodes.Emplace(Index, NavGrid::FNode(Index, Height));
+	Nodes.Emplace(Index, NavGrid::FNode(Index));
 }
 
 TArray<FAdjacencyListIndex> FNavGridAdjacencyList::GetReachableNeighbors(const FAdjacencyListIndex& Index) const
@@ -86,13 +86,13 @@ TArray<NavGrid::FEdge> FNavGridAdjacencyList::GetEdgeList()
 	return Output;
 }
 
-void FNavGridAdjacencyList::CreateEdge(const FAdjacencyListIndex& FromIndex, const float FromHeight, const FAdjacencyListIndex& ToIndex, const float ToHeight, const NavGrid::EMapEdgeType EdgeType)
+void FNavGridAdjacencyList::CreateEdge(const NavGrid::FAdjacencyListIndex& FromIndex, const NavGrid::FAdjacencyListIndex& ToIndex, const NavGrid::EMapEdgeType EdgeType)
 {
 	if (!HasNode(FromIndex)) {
-		AddNode(FromIndex, FromHeight);
+		AddNode(FromIndex);
 	}
 	if (!HasNode(ToIndex)) {
-		AddNode(ToIndex, ToHeight);
+		AddNode(ToIndex);
 	}
 
 	const FVector Direction(ToIndex.X - FromIndex.X, ToIndex.Y - FromIndex.Y, ToIndex.Z - FromIndex.Z);

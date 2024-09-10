@@ -19,16 +19,15 @@ namespace NavGrid
 	struct FNode
 	{
 		FNode();
-		FNode(const FAdjacencyListIndex& NewIndex, const float NewHeight);
+		explicit FNode(const FAdjacencyListIndex& NewIndex);
 			
 		FAdjacencyListIndex Index;
-		float Height;
 		TArray<FEdge> OutEdges;
 
 		// serialization/deserialization
 		friend FArchive& operator<<(FArchive& Ar, FNode& Rhs)
 		{
-			Ar << Rhs.Index.X << Rhs.Index.Y << Rhs.Index.Z << Rhs.Height << Rhs.OutEdges;
+			Ar << Rhs.Index.X << Rhs.Index.Y << Rhs.Index.Z << Rhs.OutEdges;
 			return Ar;
 		}
 		

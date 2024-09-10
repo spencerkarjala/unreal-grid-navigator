@@ -2,8 +2,8 @@
 
 namespace NavGrid
 {
-	FNode::FNode() : Index(0), Height(0.0) {}
-	FNode::FNode(const FAdjacencyListIndex& NewIndex, const float NewHeight) : Index(NewIndex), Height(NewHeight) {}
+	FNode::FNode() : Index(0) {}
+	FNode::FNode(const FAdjacencyListIndex& NewIndex) : Index(NewIndex) {}
 
 	bool FNode::operator==(const FNode& Rhs) const
 	{
