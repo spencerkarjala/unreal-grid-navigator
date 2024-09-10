@@ -62,8 +62,7 @@ TArray<FAdjacencyListIndex> FNavGridAdjacencyList::GetReachableNeighbors(const F
 		if (Edge.Type != NavGrid::Direct && Edge.Type != NavGrid::Slope && Edge.Type != NavGrid::SlopeBottom && Edge.Type != NavGrid::SlopeTop) {
 			continue;
 		}
-		const auto& Neighbor = Nodes[Edge.InIndex];
-		Result.Emplace(Neighbor.Index);
+		Result.Emplace(Edge.OutIndex);
 	}
 	return Result;
 }
@@ -86,7 +85,7 @@ TArray<NavGrid::FEdge> FNavGridAdjacencyList::GetEdgeList()
 	return Output;
 }
 
-void FNavGridAdjacencyList::CreateEdge(const NavGrid::FAdjacencyListIndex& FromIndex, const NavGrid::FAdjacencyListIndex& ToIndex, const NavGrid::EMapEdgeType EdgeType)
+void FNavGridAdjacencyList::CreateEdge(const FAdjacencyListIndex& FromIndex, const FAdjacencyListIndex& ToIndex, const NavGrid::EMapEdgeType EdgeType)
 {
 	if (!HasNode(FromIndex)) {
 		AddNode(FromIndex);
